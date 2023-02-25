@@ -1,3 +1,7 @@
+#custom
+pipex
+.DS_STORE
+
 # Prerequisites
 *.d
 
