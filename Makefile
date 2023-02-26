@@ -3,6 +3,8 @@ HEADER = ./inc/pipex.h
 SRC_DIR = ./src/
 
 SRCS =	${SRC_DIR}main.c\
+		${SRC_DIR}parsing.c\
+		${SRC_DIR}aux.c
 
 OBJS =	${SRCS:.c=.o}
 

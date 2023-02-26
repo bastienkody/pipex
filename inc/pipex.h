@@ -15,5 +15,13 @@
 
 #include "../libft/libft.h"
 #include <stdlib.h>
+#include <unistd.h>
+
+
+/* aux */
+void	print_path(t_list *path);
+
+/* parsing */
+t_list	*path_to_llist(char **envp);
 
 #endif
