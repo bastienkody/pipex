@@ -12,16 +12,30 @@
 
 #include "../inc/pipex.h"
 
-/* turn from void to t_list */
-void	path_to_llist(char *path)
+/* transform char *PATH to t_list */
+t_list	*path_to_llist(char *path_line)
 {
-	//t_list	path;
+	t_list	*path;
 	char	**tmp;
+	int		i;
 
-	tmp = ft_split(ft_strchr(path, '=') + 1, ':');
-	while (*tmp)
+	tmp = ft_split(ft_strchr(path_line, '=') + 1, ':');
+	path = NULL;
+	i = -1;
+	while (tmp[++i])
+		ft_lstadd_back(&path, ft_lstnew(ft_strdup(tmp[i])));
+	while (--i > -1)
+		free(tmp[i]);
+	free(tmp);
+	return (path);
+}
+
+void	print_path(t_list *path)
+{
+	while (path)
 	{
-		ft_fprintf(1, "%s\n", *tmp++);
+		ft_fprintf(1, "%s\n", path->content);
+		path = path->next;
 	}
 }
 
@@ -29,7 +43,7 @@ void	path_to_llist(char *path)
 int	main(int argc, char **argv, char **envp)
 {
 	int		res;
-	//t_list	path;
+	t_list	*path;
 
 	if (argc !=2)
 		return (1);
@@ -41,12 +55,11 @@ int	main(int argc, char **argv, char **envp)
 	while (*envp)
 	{
 		if (!ft_strncmp("PATH", *envp, 4))
-		{
-			ft_fprintf(1,"%s\n", *envp);
-			path_to_llist(*envp);
-		}
+			path = path_to_llist(*envp);
 		envp++;
 	}
+	print_path(path);
+	ft_lstclear(&path, free);
 	return (0);
 }
 
