@@ -28,7 +28,7 @@ all:	${NAME}
 ${NAME}:	${OBJS} ${HEADER} ${LIBFT}
 			@echo "\033[32m\c"
 			${CC} -o ${NAME} ${OBJS} ${LDFLAGS}
-			@echo "Link complete --> \033[36;1m${NAME}\033[0m"
+			@echo "Link complete for exec --> \033[4;36;1m${NAME}\033[0m"
 
 ${LIBFT}:
 			@echo "\033[33mlibft compilation ...\033[0m"
