@@ -12,21 +12,33 @@
 
 #include "../inc/pipex.h"
 
-/* get the t_list from the above fct */
+void	free_n_quit(t_list *path)
+{
+	ft_lstclear(&path, free);
+}
+
+int	arg_checker(int argc, char **argv)
+{
+	if (argc < 5)
+		return (0);
+	if (!ft_strncmp(argv[1], "here_doc", ft_strlen("here_doc")) && argc < 6)
+		return (0);
+	ft_fprintf(1, "Pas de pb d'arg\n");
+	return (1);
+}
+
 int	main(int argc, char **argv, char **envp)
 {
-	int		res;
 	t_list	*path;
+	t_files	files;
 
-	if (argc < 2)
+	if (!arg_checker(argc, argv))
 		return (1);
-	res = access(argv[1], F_OK);
-	if (!res)
-		ft_fprintf(1, "infile [%s] exist\n", argv[1]);
+	//infile = access(argv[1], F_OK);
+	//outfile = access(argv[argc -1], F_OK);
+	execve("ls", argv, envp);
 	path = path_to_llist(envp);
-	//print_path(path);
-	ft_lstclear(&path, free);
-	while (*(++argv))
-		ft_fprintf(1, "%s\n", *argv);
+	files = file_parser(argc, argv);
+	free_n_quit(path);
 	return (0);
 }

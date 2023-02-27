@@ -20,3 +20,15 @@ void	print_path(t_list *path)
 		path = path->next;
 	}
 }
+
+void	print_files(t_files files)
+{
+	if (!files.here_doc)
+		ft_fprintf(1, "infile:%s\n", files.infile);
+	else
+	{
+		ft_fprintf(1, "here_doc?:%i\n", files.here_doc);
+		ft_fprintf(1, "limiter:%s\n", files.limiter);
+	}
+	ft_fprintf(1, "outfile:%s\n", files.outfile);
+}

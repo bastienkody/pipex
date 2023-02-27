@@ -35,3 +35,42 @@ t_list	*path_to_llist(char **envp)
 	free(tmp);
 	return (path);
 }
+
+t_files	file_parser(int argc, char **argv)
+{
+	t_files	files;
+
+	if (!ft_strncmp(argv[1], "here_doc", ft_strlen("here_doc")))
+	{
+		files.infile = NULL;
+		files.here_doc = 1;
+		files.limiter = argv[2];
+	}
+	else
+	{
+		files.infile = argv[1];
+		files.here_doc = 0;
+		files.limiter = NULL;
+	}
+	files.outfile = argv[argc - 1];
+	print_files(files);
+	return (files);
+}
+
+/* 	Si cmd sans path (pas de '/')
+		1:check in PATH. 2:check relative path (ou pas du tout!!). 3: Check accesibility 
+	Si cmd avec path (avec un '/' dans le nom)
+		1:check relative path 2:check in PATH. 3: Check accesibility 
+a noter : execve marche avec un ./a.out (le ./ est accepte) et aussi sans (a.out dans dossier courant est execute)
+A verifier egaleemnt pour access !!
+*/
+/*char	*acces_cmd_path(t_cmd *cmd, t_list *path)
+{
+
+}
+
+t_cmd	cmd_parser(int argc, char **argv)
+{
+
+}
+*/
