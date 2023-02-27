@@ -18,15 +18,15 @@ int	main(int argc, char **argv, char **envp)
 	int		res;
 	t_list	*path;
 
-	if (argc !=2)
+	if (argc < 2)
 		return (1);
 	res = access(argv[1], F_OK);
 	if (!res)
-		ft_fprintf(1, "file [%s] exist\n", argv[1]);
-	else
-		ft_fprintf(1, "file [%s] doesnt exist\n", argv[1]);
+		ft_fprintf(1, "infile [%s] exist\n", argv[1]);
 	path = path_to_llist(envp);
-	print_path(path);
+	//print_path(path);
 	ft_lstclear(&path, free);
+	while (*(++argv))
+		ft_fprintf(1, "%s\n", *argv);
 	return (0);
 }
