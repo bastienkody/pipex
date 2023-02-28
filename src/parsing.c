@@ -22,7 +22,7 @@ t_list	*path_to_llist(char **envp)
 	while (*envp)
 	{
 		if (!ft_strncmp("PATH", *envp, 4))
-			break;
+			break ;
 		envp++;
 	}
 	tmp = ft_split(ft_strchr(*envp, '=') + 1, ':');
@@ -36,6 +36,7 @@ t_list	*path_to_llist(char **envp)
 	return (path);
 }
 
+/* handles infile outfile here_doc infos into t_files */
 t_files	file_parser(int argc, char **argv)
 {
 	t_files	files;
@@ -53,24 +54,91 @@ t_files	file_parser(int argc, char **argv)
 		files.limiter = NULL;
 	}
 	files.outfile = argv[argc - 1];
-	print_files(files);
 	return (files);
 }
 
+/* search for cmd in the PATH */
+void	path_finder(t_cmd *cmd, t_list *path)
+{
+	char	*tmp_path;
+	char	*tmp_name;
+
+	tmp_name = ft_strjoin("/", cmd->cmd_name);
+	if (!tmp_name)
+		return ;
+	while (path)
+	{
+		tmp_path = ft_strjoin(path->content, tmp_name);
+		if (!tmp_path)
+			return (free(tmp_name));
+		if (!access(tmp_path, F_OK))
+		{
+			cmd->cmd_path = tmp_path;
+			cmd->exist = access(tmp_path, F_OK);
+			cmd->is_exec = access(tmp_path, X_OK);
+			return (free(tmp_name));
+		}
+		free(tmp_path);
+		path = path->next;
+	}
+	free(tmp_name);
+	cmd->cmd_path = NULL;
+	cmd->exist = -1;
+	cmd->is_exec = -1;
+}
+
 /* 	Si cmd sans path (pas de '/')
-		1:check in PATH. 2:check relative path (ou pas du tout!!). 3: Check accesibility 
+		1:check in PATH. 2: Check accesibility + exec 
 	Si cmd avec path (avec un '/' dans le nom)
-		1:check relative path 2:check in PATH. 3: Check accesibility 
-a noter : execve marche avec un ./a.out (le ./ est accepte) et aussi sans (a.out dans dossier courant est execute)
+		1:check in PATH only. 2: Check accesibility + exec
+a noter : execve marche avec un ./a.out (le ./ est accepte) 
+et aussi sans (a.out dans dossier courant est execute)
 A verifier egaleemnt pour access !!
 */
-/*char	*acces_cmd_path(t_cmd *cmd, t_list *path)
-{
 
+/* set cmd path + existence + execution rights */
+void	set_cmd_infos(t_cmd **start, t_list *path)
+{
+	t_cmd	*ptr;
+
+	ptr = *start;
+	while (ptr)
+	{
+		if (ft_strchr(ptr->cmd_name, '/'))
+		{
+			ptr->cmd_path = ft_strdup(ptr->cmd_name);
+			ptr->exist = access(ptr->cmd_name, F_OK);
+			ptr->is_exec = access(ptr->cmd_name, X_OK);
+		}
+		else
+			path_finder(ptr, path);
+		ptr = ptr->next;
+	}
 }
 
-t_cmd	cmd_parser(int argc, char **argv)
+/* stores each cmd given into a t_cmd llist */
+t_cmd	*cmd_parser(char **argv, int here_doc)
 {
+	t_cmd	*start;
+	t_cmd	*tmp;
+	char	**cmd_spltd;
 
+	argv++;
+	if (here_doc)
+		argv++;
+	start = NULL;
+	while (*(argv + 2))
+	{
+		cmd_spltd = ft_split(*(++argv), ' ');
+		if (!cmd_spltd)
+			return (NULL);
+		tmp = cmd_lstnew(cmd_spltd);
+		if (!tmp)
+		{
+			cmd_lstclear(&start, &free);
+			return (NULL);
+		}
+		start = cmd_lstadd_back(&start, tmp);
+	}
+	return (start);
 }
-*/
