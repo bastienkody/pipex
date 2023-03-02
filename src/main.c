@@ -43,14 +43,15 @@ int	main(int argc, char **argv, char **envp)
 		return (1);
 	//infile = access(argv[1], F_OK);
 	//outfile = access(argv[argc -1], F_OK);
-	//execve("/usr/bin/ls", NULL, envp);
 	path = path_to_llist(envp);
 	files = file_parser(argc, argv);
 	cmd_list = cmd_parser(argv, files.here_doc);
 	set_cmd_infos(&cmd_list, path);
+	print_files(files);
 	print_cmd_list(cmd_list);
-	free_n_quit(path, &cmd_list);
 	fork();
 	ft_fprintf(1, "Hello\n");
+	execve("/usr/bin/echo", ft_split("salut bonjour au revoir", ' '), envp);
+	free_n_quit(path, &cmd_list);
 	return (0);
 }

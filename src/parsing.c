@@ -25,12 +25,15 @@ t_list	*path_to_llist(char **envp)
 			break ;
 		envp++;
 	}
-	tmp = ft_split(ft_strchr(*envp, '=') + 1, ':');
 	path = NULL;
-	i = -1;
-	while (tmp[++i])
-		ft_lstadd_back(&path, ft_lstnew(ft_strdup(tmp[i])));
-	free_matrix(tmp);
+	if (*envp)
+	{
+		tmp = ft_split(ft_strchr(*envp, '=') + 1, ':');
+		i = -1;
+		while (tmp[++i])
+			ft_lstadd_back(&path, ft_lstnew(ft_strdup(tmp[i])));
+		free_matrix(tmp);
+	}
 	return (path);
 }
 
@@ -84,15 +87,6 @@ void	path_finder(t_cmd *cmd, t_list *path)
 	cmd->exist = -1;
 	cmd->is_exec = -1;
 }
-
-/* 	Si cmd sans path (pas de '/')
-		1:check in PATH. 2: Check accesibility + exec 
-	Si cmd avec path (avec un '/' dans le nom)
-		1:check in PATH only. 2: Check accesibility + exec
-a noter : execve marche avec un ./a.out (le ./ est accepte) 
-et aussi sans (a.out dans dossier courant est execute)
-A verifier egaleemnt pour access !!
-*/
 
 /* set cmd path + existence + execution rights */
 void	set_cmd_infos(t_cmd **start, t_list *path)
