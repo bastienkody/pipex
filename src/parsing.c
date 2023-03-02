@@ -30,9 +30,7 @@ t_list	*path_to_llist(char **envp)
 	i = -1;
 	while (tmp[++i])
 		ft_lstadd_back(&path, ft_lstnew(ft_strdup(tmp[i])));
-	while (--i > -1)
-		free(tmp[i]);
-	free(tmp);
+	free_matrix(tmp);
 	return (path);
 }
 
@@ -106,9 +104,12 @@ void	set_cmd_infos(t_cmd **start, t_list *path)
 	{
 		if (ft_strchr(ptr->cmd_name, '/'))
 		{
-			ptr->cmd_path = ft_strdup(ptr->cmd_name);
-			ptr->exist = access(ptr->cmd_name, F_OK);
 			ptr->is_exec = access(ptr->cmd_name, X_OK);
+			ptr->exist = access(ptr->cmd_name, F_OK);
+			if (!ptr->exist)
+				ptr->cmd_path = ft_strdup(ptr->cmd_name);
+			else
+				ptr->cmd_path = NULL;
 		}
 		else
 			path_finder(ptr, path);
