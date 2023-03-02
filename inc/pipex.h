@@ -17,6 +17,7 @@
 #include "../libft/libft.h"
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 /* colors */
 # define RED "\033[31m"
@@ -35,7 +36,7 @@ typedef	struct files
 
 typedef	struct s_cmd
 {
-	char			*cmd_name;	// name (ls)								STACK
+	char			*cmd_name;	// name (ls)								HEAP (freed via cmd_argv)
 	char			*cmd_path;	// full path (/ur/bin/ls)					HEAP
 	char			**cmd_argv;	// options + arg avec cmd_name en argv[0]	HEAP
 	int				exist;		// F_OK										STACK
