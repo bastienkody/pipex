@@ -12,48 +12,31 @@
 
 #include "../inc/pipex.h"
 
-void	print_path(t_list *path)
+void	free_n_quit(t_list *path, t_cmd **cmd_list)
 {
-	while (path)
-	{
-		ft_fprintf(1, "%s\n", path->content);
-		path = path->next;
-	}
-	ft_fprintf(1, "----------------\n");
+	ft_lstclear(&path, free);
+	cmd_lstclear(cmd_list, free);
 }
 
-void	print_files(t_files files)
+int	arg_checker(int argc, char **argv)
 {
-	ft_fprintf(1, "----------------\n|FILES|\n");
-	if (!files.here_doc)
-		ft_fprintf(1, "infile:%s\n", files.infile);
-	else
+	if (argc < 5)
 	{
-		ft_fprintf(1, "here_doc?:%i\n", files.here_doc);
-		ft_fprintf(1, "limiter:%s\n", files.limiter);
+		ft_fprintf(2, "%sProvide at least 4 arguments%s\n", REDBOLD, END);
+		ft_fprintf(2, "%sUsage%s : ", UNDRLN, END);
+		ft_fprintf(2, "\"infile\" \"cmd1\" \"cmd2\" ... ");
+		ft_fprintf(2, "\"cmdn\" \"outfile\"\n");
+		return (0);
 	}
-	ft_fprintf(1, "outfile:%s\n", files.outfile);
-}
-
-void	print_cmd_list(t_cmd *start)
-{
-	int	i;
-
-	while (start)
+	if (!ft_strncmp(argv[1], "here_doc", ft_strlen("here_doc")) && argc < 6)
 	{
-		ft_fprintf(1, "---------------------\n|NEW COMMAND|\n");
-		ft_fprintf(1, "name:%s\n", start->cmd_name);
-		i = 0;
-		while (start->cmd_argv[i])
-		{
-			ft_fprintf(1, "cmd_argv:%s\n", start->cmd_argv[i]);
-			i++;
-		}
-		ft_fprintf(1, "path:%s\n", start->cmd_path);
-		ft_fprintf(1, "exist:%i\n", start->exist);
-		ft_fprintf(1, "is exec:%i\n", start->is_exec);
-		start = start->next;
+		ft_fprintf(2, "%s5 arguments needed if here_doc%s\n", REDBOLD, END);
+		ft_fprintf(2, "%sUsage%s : ", UNDRLN, END);
+		ft_fprintf(2, "here_doc \"Limiter\" \"cmd1\" \"cmd2\" ... ");
+		ft_fprintf(2, "\"cmdn\" \"outfile\"\n");
+		return (0);
 	}
+	return (1);
 }
 
 void	free_matrix(char **matrix)

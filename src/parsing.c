@@ -53,8 +53,12 @@ t_files	file_parser(int argc, char **argv)
 		files.infile = argv[1];
 		files.here_doc = 0;
 		files.limiter = NULL;
+		files.in_exist = access(argv[1], F_OK);
+		files.in_is_readbl = access(argv[1], R_OK);
 	}
 	files.outfile = argv[argc - 1];
+	files.out_exist = access(argv[argc -1], F_OK);
+	files.out_is_writbl = access(argv[argc -1], W_OK);
 	return (files);
 }
 
@@ -83,12 +87,12 @@ void	path_finder(t_cmd *cmd, t_list *path)
 		path = path->next;
 	}
 	free(tmp_name);
-	cmd->cmd_path = NULL;
+	cmd->cmd_path = ft_strdup(cmd->cmd_name);
 	cmd->exist = -1;
 	cmd->is_exec = -1;
 }
 
-/* set cmd path + existence + execution rights */
+/* set cmd path + existence + execution rights. If '/' no search in PATH */
 void	set_cmd_infos(t_cmd **start, t_list *path)
 {
 	t_cmd	*ptr;
@@ -100,10 +104,7 @@ void	set_cmd_infos(t_cmd **start, t_list *path)
 		{
 			ptr->is_exec = access(ptr->cmd_name, X_OK);
 			ptr->exist = access(ptr->cmd_name, F_OK);
-			if (!ptr->exist)
-				ptr->cmd_path = ft_strdup(ptr->cmd_name);
-			else
-				ptr->cmd_path = NULL;
+			ptr->cmd_path = ft_strdup(ptr->cmd_name);
 		}
 		else
 			path_finder(ptr, path);

@@ -16,20 +16,27 @@
 /* lib */
 #include "../libft/libft.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 /* colors */
 # define RED "\033[31m"
 # define REDBOLD "\033[1;31m"
 # define GREEN "\033[32m"
 # define GREENBOLD "\033[1;32m"
+# define UNDRLN "\033[4m"
 # define END "\033[0m"
 
 typedef	struct files
 {
 	char	*infile;
+	int		in_exist;
+	int		in_is_readbl;
 	char	*outfile;
+ 	int		out_exist;
+	int		out_is_writbl;
 	int		here_doc;
 	char	*limiter;
 }				t_files;
@@ -44,10 +51,14 @@ typedef	struct s_cmd
 	struct s_cmd	*next;
 }					t_cmd;
 
-/* aux */
+/* printers */
 void	print_path(t_list *path);
 void	print_files(t_files files);
 void	print_cmd_list(t_cmd *start);
+
+/* aux */
+void	free_n_quit(t_list *path, t_cmd **cmd_list);
+int		arg_checker(int argc, char **argv);
 void	free_matrix(char **matrix);
 
 /* t_cmd fct */

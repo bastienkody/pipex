@@ -12,25 +12,48 @@
 
 #include "../inc/pipex.h"
 
-void	free_n_quit(t_list *path, t_cmd **cmd_list)
+void	exec_in_child(t_cmd *cmd, char **envp)
 {
-	ft_lstclear(&path, free);
-	cmd_lstclear(cmd_list, free);
+		if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
+		{
+			perror("zsh");
+		}
+		exit(EXIT_FAILURE);
 }
 
-int	arg_checker(int argc, char **argv)
+int	pipex(t_cmd *cmd_list, t_files files, char **envp)
 {
-	if (argc < 5)
+	t_list	*pid_lst;
+	pid_t	pid;
+	int		child_status;
+
+	if (!files.here_doc && (files.in_exist || files.in_is_readbl))
 	{
-		ft_fprintf(2, "%sProvide at least 4 arguments%s\n", REDBOLD, END);
-		return (0);
+		if (files.in_exist)
+			ft_fprintf(2, "zsh: no such file or directory: %s\n", files.infile);
+		else if (files.in_is_readbl)
+			ft_fprintf(2, "zsh: permission denied: %s\n", files.infile);
+		cmd_list = cmd_list->next;
 	}
-	if (!ft_strncmp(argv[1], "here_doc", ft_strlen("here_doc")) && argc < 6)
+	pid_lst = NULL;
+	while (cmd_list)
 	{
-		ft_fprintf(2, "%s5 arguments needed if here_doc%s\n", REDBOLD, END);
-		return (0);
+		pid = fork();
+		if (pid == -1)
+			ft_fprintf(2, "Fork error for cmd:%s\n", cmd_list->cmd_name);
+		if (pid == 0)
+		{
+			exec_in_child(cmd_list, envp) ;
+			ft_lstadd_back(&pid_lst, ft_lstnew(&pid));
+		}
+		cmd_list = cmd_list->next;
 	}
-	return (1);
+	while (pid_lst)
+	{
+		waitpid(*((pid_t *)(pid_lst->content)), &child_status, 0);
+		pid_lst = pid_lst->next;
+	}
+	return (0);
 }
 
 int	main(int argc, char **argv, char **envp)
@@ -41,17 +64,21 @@ int	main(int argc, char **argv, char **envp)
 
 	if (!arg_checker(argc, argv))
 		return (1);
-	//infile = access(argv[1], F_OK);
-	//outfile = access(argv[argc -1], F_OK);
+
 	path = path_to_llist(envp);
 	files = file_parser(argc, argv);
 	cmd_list = cmd_parser(argv, files.here_doc);
 	set_cmd_infos(&cmd_list, path);
 	print_files(files);
 	print_cmd_list(cmd_list);
-	fork();
-	ft_fprintf(1, "Hello\n");
-	execve("/usr/bin/echo", ft_split("salut bonjour au revoir", ' '), envp);
+	//ouvrir les files et/ou gerer here_doc
+	pipex(cmd_list, files, envp);
+
+
+
+
+
+
 	free_n_quit(path, &cmd_list);
 	return (0);
 }
