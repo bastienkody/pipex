@@ -132,7 +132,7 @@ t_cmd	*first_last_cmd_vs_files(t_files files, t_cmd *cmd)
 		cmd = tmp;
 	}
 	tmp = cmd;
-	if (files.out_is_writbl)
+	if (!files.out_exist && files.out_is_writbl)
 	{
 		while (tmp->next->next)
 			tmp = tmp->next;

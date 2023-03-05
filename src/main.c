@@ -21,30 +21,37 @@ void	exec_in_child(t_cmd *cmd, char **envp)
 	}
 	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
 	{
-		perror("zsh error");
+		perror("zsh");
 		exit(EXIT_FAILURE);
 	}
 	//exit(EXIT_SUCCESS);
 }
 
-int	pipex(t_cmd *cmd, char **envp)
+int	pipex(t_cmd *cmd, char **envp, t_files files)
 {
 	pid_t	pid;
-	//int		child_status;
+	int		i;
+	int		child_status;
 
+	i= 0;
 	while (cmd)
 	{
 		pid = fork();
-		if (pid == -1)
-			ft_fprintf(2, "error forking\n");
-		if (pid == 0)
-			exec_in_child(cmd, envp);
 		if (pid > 0)
 		{
 			ft_fprintf(1, "in parent, caring about child at pid :%i\n", pid);
+			i++;
 		}
-		cmd= cmd->next;
+		if (pid == -1)
+			perror("fork");
+		if (pid == 0)
+			exec_in_child(cmd, envp);
+		if (!files.out_exist && files.out_is_writbl && cmd->next == NULL)
+			ft_fprintf(2, "zsh: permission denied: %s\n",files.outfile);
+		cmd = cmd->next;
 	}
+	while (i--)
+		waitpid(0, &child_status, 0);
 	return (1);
 }
 
@@ -59,8 +66,8 @@ int	main(int argc, char **argv, char **envp)
 	path = path_to_llist(envp);
 	files = file_parser(argc, argv);
 	cmd_list = cmd_parser(argv, files, path);
-	print_cmd_list(cmd_list);
-	//pipex(cmd_list, envp);
+	//print_cmd_list(cmd_list);
+	pipex(cmd_list, envp, files);
 
 
 
