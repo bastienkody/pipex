@@ -68,7 +68,7 @@ void	ft_lstprint(t_list *lst)
 {
 	while (lst)
 	{
-		ft_fprintf(1, "%d\n", *((pid_t *)(lst->content)));
+		ft_fprintf(1, "lst_print:%d\n", *((pid_t *)(lst->content)));
 		lst = lst->next;
 	}
 }

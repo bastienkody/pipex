@@ -72,7 +72,7 @@ void	cmd_lstclear(t_cmd **start, void (*del)(void *));
 /* parsing */
 t_list	*path_to_llist(char **envp);
 t_files	file_parser(int argc, char **argv);
-t_cmd	*cmd_parser(char **argv, int here_doc);
+t_cmd	*cmd_parser(char **argv, t_files files, t_list *path);
 void	set_cmd_infos(t_cmd **start, t_list *path);
 
 #endif

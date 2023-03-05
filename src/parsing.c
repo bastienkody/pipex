@@ -112,15 +112,47 @@ void	set_cmd_infos(t_cmd **start, t_list *path)
 	}
 }
 
-/* stores each cmd given into a t_cmd llist */
-t_cmd	*cmd_parser(char **argv, int here_doc)
+/* update cmdlist according to : 
+if no infile or not readable : skip first command 
+if no outfile : create one (and later execute last cmd)
+if outfile no writable : skip lastcmd */
+t_cmd	*first_last_cmd_vs_files(t_files files, t_cmd *cmd)
+{
+	t_cmd	*tmp;
+
+	if (!files.here_doc && (files.in_exist || files.in_is_readbl))
+	{
+		if (files.in_exist)
+			ft_fprintf(2, "zsh: no such file or directory: %s\n", files.infile);
+		else if (files.in_is_readbl)
+			ft_fprintf(2, "zsh: permission denied: %s\n", files.infile);
+		tmp = cmd->next;
+		cmd->next = NULL;
+		cmd_lstclear(&cmd, free);
+		cmd = tmp;
+	}
+	tmp = cmd;
+	if (files.out_is_writbl)
+	{
+		while (tmp->next->next)
+			tmp = tmp->next;
+		cmd_lstclear(&tmp->next, free);
+		tmp->next = NULL;
+	}
+	return (cmd);
+}
+
+/*	stores each cmd given into a t_cmd llist 
+	get infos about the cmd path 
+	erase (free then skip) first and last cmd if in/outfile pb*/
+t_cmd	*cmd_parser(char **argv, t_files files, t_list *path)
 {
 	t_cmd	*start;
 	t_cmd	*tmp;
 	char	**cmd_spltd;
 
 	argv++;
-	if (here_doc)
+	if (files.here_doc)
 		argv++;
 	start = NULL;
 	while (*(argv + 2))
@@ -136,5 +168,7 @@ t_cmd	*cmd_parser(char **argv, int here_doc)
 		}
 		start = cmd_lstadd_back(&start, tmp);
 	}
+	set_cmd_infos(&start, path);
+	start = first_last_cmd_vs_files(files, start);
 	return (start);
 }
