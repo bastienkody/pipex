@@ -26,6 +26,7 @@
 # define REDBOLD "\033[1;31m"
 # define GREEN "\033[32m"
 # define GREENBOLD "\033[1;32m"
+# define BOLD "\033[1m"
 # define UNDRLN "\033[4m"
 # define END "\033[0m"
 
@@ -55,11 +56,13 @@ typedef	struct s_cmd
 void	print_path(t_list *path);
 void	print_files(t_files files);
 void	print_cmd_list(t_cmd *start);
+void	ft_lstprint(t_list *lst);
 
 /* aux */
 void	free_n_quit(t_list *path, t_cmd **cmd_list);
 int		arg_checker(int argc, char **argv);
 void	free_matrix(char **matrix);
+void	free_pid_lst(t_list **lst);
 
 /* t_cmd fct */
 t_cmd	*cmd_lstnew(char **cmd_spltd);

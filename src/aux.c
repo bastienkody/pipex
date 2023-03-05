@@ -22,7 +22,7 @@ int	arg_checker(int argc, char **argv)
 {
 	if (argc < 5)
 	{
-		ft_fprintf(2, "%sProvide at least 4 arguments%s\n", REDBOLD, END);
+		ft_fprintf(2, "%sProvide at least 4 arguments%s\n", BOLD, END);
 		ft_fprintf(2, "%sUsage%s : ", UNDRLN, END);
 		ft_fprintf(2, "\"infile\" \"cmd1\" \"cmd2\" ... ");
 		ft_fprintf(2, "\"cmdn\" \"outfile\"\n");
@@ -30,7 +30,7 @@ int	arg_checker(int argc, char **argv)
 	}
 	if (!ft_strncmp(argv[1], "here_doc", ft_strlen("here_doc")) && argc < 6)
 	{
-		ft_fprintf(2, "%s5 arguments needed if here_doc%s\n", REDBOLD, END);
+		ft_fprintf(2, "%s5 arguments needed if here_doc%s\n", BOLD, END);
 		ft_fprintf(2, "%sUsage%s : ", UNDRLN, END);
 		ft_fprintf(2, "here_doc \"Limiter\" \"cmd1\" \"cmd2\" ... ");
 		ft_fprintf(2, "\"cmdn\" \"outfile\"\n");
@@ -47,4 +47,18 @@ void	free_matrix(char **matrix)
 	while (matrix[i])
 		free(matrix[i++]);
 	free(matrix);
+}
+
+void	free_pid_lst(t_list **lst)
+{
+	t_list	*tmp;
+
+	if (!lst || !*lst)
+		return ;
+	while (*lst)
+	{
+		tmp = (*lst)->next;
+		free(*lst);
+		*lst = tmp;
+	}
 }

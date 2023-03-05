@@ -62,3 +62,13 @@ void	print_cmd_list(t_cmd *start)
 	}
 	ft_fprintf(1, "---------------------\n");
 }
+
+/* for pid_lst */
+void	ft_lstprint(t_list *lst)
+{
+	while (lst)
+	{
+		ft_fprintf(1, "%d\n", *((pid_t *)(lst->content)));
+		lst = lst->next;
+	}
+}
