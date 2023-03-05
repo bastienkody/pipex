@@ -66,14 +66,15 @@ int	main(int argc, char **argv, char **envp)
 	path = path_to_llist(envp);
 	files = file_parser(argc, argv);
 	cmd_list = cmd_parser(argv, files, path);
+	print_files(files);
 	//print_cmd_list(cmd_list);
-	pipex(cmd_list, envp, files);
+	//pipex(cmd_list, envp, files);
 
 
 
 
 
-
+	close_files(&files);
 	free_n_quit(path, &cmd_list);
 	return (0);
 }

@@ -37,31 +37,6 @@ t_list	*path_to_llist(char **envp)
 	return (path);
 }
 
-/* handles infile outfile here_doc infos into t_files */
-t_files	file_parser(int argc, char **argv)
-{
-	t_files	files;
-
-	if (!ft_strncmp(argv[1], "here_doc", ft_strlen("here_doc")))
-	{
-		files.infile = NULL;
-		files.here_doc = 1;
-		files.limiter = argv[2];
-	}
-	else
-	{
-		files.infile = argv[1];
-		files.here_doc = 0;
-		files.limiter = NULL;
-		files.in_exist = access(argv[1], F_OK);
-		files.in_is_readbl = access(argv[1], R_OK);
-	}
-	files.outfile = argv[argc - 1];
-	files.out_exist = access(argv[argc -1], F_OK);
-	files.out_is_writbl = access(argv[argc -1], W_OK);
-	return (files);
-}
-
 /* search for cmd in the PATH */
 void	path_finder(t_cmd *cmd, t_list *path)
 {

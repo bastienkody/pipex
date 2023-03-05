@@ -30,15 +30,18 @@ void	print_files(t_files files)
 		ft_fprintf(1, "infile:%s\n", files.infile);
 		ft_fprintf(1, "infile exist:%i\n", files.in_exist);
 		ft_fprintf(1, "infile is readbl:%i\n", files.in_is_readbl);
+		ft_fprintf(1, "infile_fd:%i\n", files.in_fd);
 	}
 	else
 	{
 		ft_fprintf(1, "here_doc?:%i\n", files.here_doc);
 		ft_fprintf(1, "limiter:%s\n", files.limiter);
+		ft_fprintf(1, "infile_fd:%i\n", files.in_fd);
 	}
 	ft_fprintf(1, "outfile:%s\n", files.outfile);
 	ft_fprintf(1, "outfile exist:%i\n", files.out_exist);
 	ft_fprintf(1, "outfile is writbl:%i\n", files.out_is_writbl);
+	ft_fprintf(1, "outfile_fd:%i\n", files.out_fd);
 }
 
 void	print_cmd_list(t_cmd *start)
