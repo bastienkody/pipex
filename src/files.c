@@ -50,7 +50,7 @@ void	open_files(t_files *files)
 	if (!files->here_doc && !files->in_exist && !files->in_is_readbl)	//open infile
 		files->in_fd = open(files->infile, O_RDONLY);
 	if ((!files->here_doc && (files->in_exist || files->in_is_readbl))
-		|| files->here_doc)												//cant read infile or no nedd bc of here_doc : fd = -2
+		|| files->here_doc)												//cant read infile or no need bc of here_doc : fd = -2
 		files->in_fd = -2;
 	//if (files->here_doc)												// here_doc via gnl
 		//launch_here_doc(files);

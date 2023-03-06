@@ -52,6 +52,7 @@ void	print_cmd_list(t_cmd *start)
 	{
 		ft_fprintf(1, "---------------------\n|NEW COMMAND|\n");
 		ft_fprintf(1, "name:%s\n", start->cmd_name);
+		ft_fprintf(1, "index:%i\n", start->index);
 		i = 0;
 		while (start->cmd_argv[i])
 		{

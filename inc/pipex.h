@@ -47,6 +47,7 @@ typedef	struct files
 
 typedef	struct s_cmd
 {
+	int				index;		// 0 = first cmd							STACK
 	char			*cmd_name;	// name (ls)								HEAP (freed via cmd_argv)
 	char			*cmd_path;	// full path (/ur/bin/ls)					HEAP
 	char			**cmd_argv;	// options + arg avec cmd_name en argv[0]	HEAP
@@ -68,7 +69,7 @@ void	free_matrix(char **matrix);
 void	free_pid_lst(t_list **lst);
 
 /* t_cmd fct */
-t_cmd	*cmd_lstnew(char **cmd_spltd);
+t_cmd	*cmd_lstnew(char **cmd_spltd, int index);
 t_cmd	*cmd_lstadd_back(t_cmd **start, t_cmd *new);
 void	cmd_lstclear(t_cmd **start, void (*del)(void *));
 

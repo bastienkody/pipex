@@ -14,7 +14,7 @@
 
 /* llist fct for a t_cmd (stores info about each cmd given in pipex) */
 
-t_cmd	*cmd_lstnew(char **cmd_spltd)
+t_cmd	*cmd_lstnew(char **cmd_spltd, int index)
 {
 	t_cmd	*new;
 
@@ -28,7 +28,7 @@ t_cmd	*cmd_lstnew(char **cmd_spltd)
 		return (NULL);
 	new->cmd_argv = cmd_spltd;
 	new->cmd_name = cmd_spltd[0];
-	//new->cmd_path = acces_cmd_path(cmd_spltd, );
+	new->index = index;
 	new->next = NULL;
 	return (new);
 }
