@@ -20,7 +20,7 @@ void	free_n_quit(t_list *path, t_cmd **cmd_list)
 
 int	arg_checker(int argc, char **argv)
 {
-	if (argc < 5)
+	if (ft_strncmp(argv[1], "here_doc", ft_strlen("here_doc")) && argc < 5)
 	{
 		ft_fprintf(2, "%sProvide at least 4 arguments%s\n", BOLD, END);
 		ft_fprintf(2, "%sUsage%s : ", UNDRLN, END);
