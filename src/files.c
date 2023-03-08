@@ -12,19 +12,27 @@
 
 #include "../inc/pipex.h"
 
-void	launch_here_doc(t_files *files)
+char	*launch_here_doc(t_files *files)
 {
-	char	*tmp;
+	char	*line;
 	char	*data;
 
 	data = ft_strdup("");
-	tmp = ft_strdup("");
-	while (ft_strncmp(tmp, files->limiter, ft_strlen(files->limiter)))
+	while (1)
 	{
-		free(tmp);
-		tmp = get_next_line(0);
-		data = strj(data, tmp);
+		ft_fprintf(1, "here_doc > ");
+		line = get_next_line(0);
+		if (!line)
+			break ;
+		if (!ft_strncmp(line, files->limiter, ft_strlen(files->limiter)))
+		{
+			if (ft_strlen(line) == ft_strlen(files->limiter) + 1)
+				break ;
+		}
+		data = strj(data, line);
 	}
+	ft_fprintf(1, "%s\n", data);
+	return (data);
 	// write data into the pipe that will be received by first cmd
 }
 
@@ -41,10 +49,10 @@ void	open_files(t_files *files)
 		files->out_fd = open(files->outfile, O_TRUNC|O_WRONLY);
 	if (files->here_doc && !files->out_exist && !files->out_is_writbl)	//open outfile in >>
 		files->out_fd = open(files->outfile, O_APPEND|O_WRONLY);
-	if (!files->here_doc && files->out_exist)						 	// create outfile chmod 700 in >
-		files->out_fd = open(files->outfile, O_CREAT|O_WRONLY, 00700);
-	if (files->here_doc && files->out_exist)						 	// create outfile chmod 700 in >> (nsp si necessaire)
-		files->out_fd = open(files->outfile, O_CREAT|O_APPEND|O_WRONLY, 00700);
+	if (files->out_exist)						 						// create outfile chmod 700 in >
+		files->out_fd = open(files->outfile, O_CREAT|O_WRONLY, 00644);
+	//if (files->here_doc && files->out_exist)						 	// create outfile chmod 700 in >> (nsp si necessaire)
+		//files->out_fd = open(files->outfile, O_CREAT|O_APPEND|O_WRONLY, 00644);
 	if (!files->out_exist && files->out_is_writbl)						// exist but cant write outfile
 		files->out_fd = -2;
 	if (!files->here_doc && !files->in_exist && !files->in_is_readbl)	//open infile
@@ -52,11 +60,12 @@ void	open_files(t_files *files)
 	if ((!files->here_doc && (files->in_exist || files->in_is_readbl))
 		|| files->here_doc)												//cant read infile or no need bc of here_doc : fd = -2
 		files->in_fd = -2;
-	//if (files->here_doc)												// here_doc via gnl
-		//launch_here_doc(files);
+	if (files->here_doc)												// here_doc via gnl
+		launch_here_doc(files);
 }
 
-/* handles infile outfile here_doc infos into t_files */
+/* handles infile outfile here_doc infos into t_files 
+	peut etre un probleme si outfile n'existe pas et qu'on le cree : is_writble toujours à -1 */
 t_files	file_parser(int argc, char **argv)
 {
 	t_files	files;
