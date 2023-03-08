@@ -66,7 +66,6 @@ void	ft_lstprint(t_list *lst);
 void	free_n_quit(t_list *path, t_cmd **cmd_list);
 int		arg_checker(int argc, char **argv);
 void	free_matrix(char **matrix);
-void	free_pid_lst(t_list **lst);
 
 /* t_cmd fct */
 t_cmd	*cmd_lstnew(char **cmd_spltd, int index);
