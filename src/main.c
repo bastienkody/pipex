@@ -25,7 +25,7 @@ void	exec_in_child(t_cmd *cmd, char **envp, t_files *files, int pipefd[2])
 		dup2(files->out_fd, 1);
 	if (!files->out_exist && files->out_is_writbl && cmd->next == NULL)
 	{
-			ft_fprintf(2, "zsh: permission deNied: %s for cmd %s\n", files->outfile, cmd->cmd_argv[1]);
+			ft_fprintf(2, "zsh: permission deNied: %s for cmd %s\n", files->outfile, cmd->cmd_path);
 			return ;
 	}
 	if (cmd->index == 0 && !files->in_is_readbl)		// premiere cmd infile ok : read stdin from infile
