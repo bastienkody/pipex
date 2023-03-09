@@ -31,6 +31,10 @@
 # define UNDRLN "\033[4m"
 # define END "\033[0m"
 
+/* pipe */
+# define READ_END 0
+# define WRITE_END 1
+
 typedef	struct files
 {
 	char	*infile;
