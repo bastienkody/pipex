@@ -96,9 +96,9 @@ void	first_last_cmd_vs_files(t_files files)
 	if (!files.here_doc && (files.in_exist || files.in_is_readbl))
 	{
 		if (files.in_exist)
-			ft_fprintf(2, "zsh: no such file or directory: %s\n", files.infile);
+			ft_fprintf(2, "pipex: no such file or directory: %s\n", files.infile);
 		else if (files.in_is_readbl)
-			ft_fprintf(2, "zsh: permission denied: %s\n", files.infile);
+			ft_fprintf(2, "pipex: permission denied: %s\n", files.infile);
 		/*tmp = cmd->next;
 		cmd->next = NULL;
 		cmd_lstclear(&cmd, free);
@@ -115,8 +115,7 @@ void	first_last_cmd_vs_files(t_files files)
 }
 
 /*	stores each cmd given into a t_cmd llist 
-	get infos about the cmd path 
-	erase (free then skip) first and last cmd if in/outfile pb*/
+	get infos about the cmd path*/
 t_cmd	*cmd_parser(char **argv, t_files files, t_list *path)
 {
 	t_cmd	*start;
