@@ -73,7 +73,7 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 	close_files(&files);	
 	while (i--)
 		waitpid(0, &child_status, 0);
-	return (1);
+	return (child_status);
 }
 
 int	main(int argc, char **argv, char **envp)
@@ -81,6 +81,7 @@ int	main(int argc, char **argv, char **envp)
 	t_list	*path;
 	t_files	files;
 	t_cmd	*cmd_list;
+	int		lst_cmd_ex_code;
 
 	if (!arg_checker(argc, argv))
 		return (1);
@@ -89,13 +90,8 @@ int	main(int argc, char **argv, char **envp)
 	cmd_list = cmd_parser(argv, files, path);
 	//print_files(files);
 	//print_cmd_list(cmd_list);
-	pipex(cmd_list, envp, files);
-
-
-
-
-
+	lst_cmd_ex_code = pipex(cmd_list, envp, files);
 	close_files(&files);
 	free_n_quit(path, &cmd_list);
-	return (0);
+	return (lst_cmd_ex_code);
 }
