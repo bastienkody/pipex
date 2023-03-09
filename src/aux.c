@@ -20,7 +20,7 @@ void	free_n_quit(t_list *path, t_cmd **cmd_list)
 
 int	arg_checker(int argc, char **argv)
 {
-	if ( argc < 5)
+	if (argc < 5)
 	{
 		ft_fprintf(2, "%sProvide at least 4 arguments%s\n", BOLD, END);
 		ft_fprintf(2, "%sUsage%s : ", UNDRLN, END);
@@ -47,18 +47,4 @@ void	free_matrix(char **matrix)
 	while (matrix[i])
 		free(matrix[i++]);
 	free(matrix);
-}
-
-void	free_pid_lst(t_list **lst)
-{
-	t_list	*tmp;
-
-	if (!lst || !*lst)
-		return ;
-	while (*lst)
-	{
-		tmp = (*lst)->next;
-		free(*lst);
-		*lst = tmp;
-	}
 }
