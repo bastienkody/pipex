@@ -12,91 +12,93 @@
 
 #include "../inc/pipex.h"
 
-void	exec_in_child_OG(t_cmd *cmd, char **envp, t_files *files, int pipefd[2])
+void	cmd_exist_error(t_cmd *cmd)
 {
-	if (cmd->exist)														// cmd error : shell cmd vs exec
-	{
-		if (!ft_strchr(cmd->cmd_name, '/'))
-			ft_fprintf(2, "pipex: command not found: %s\n", cmd->cmd_name);
-		else
-			ft_fprintf(2, "pipex: no such file or directory: %s\n", cmd->cmd_name);
-		return ;
-	}
-	if (cmd->next)														// pas la derniere commande : stdout to pipe entry
-		dup2(pipefd[1], 1);
-	else if (!files->out_is_writbl)										// derniere cmd et outfile writbl (wether just created or existing)
-		dup2(files->out_fd, 1);
-	if (!files->out_exist && files->out_is_writbl && cmd->next == NULL)	// last cmd, outfile no_wrtbl : error printing + exit (no exec of lst cmd)
-	{
-			ft_fprintf(2, "pipex: permission deNied (outfile ; lst cmd wont be executted): %s for cmd %s\n", files->outfile, cmd->cmd_path);
-			return ;
-	}
-	if (cmd->index == 0 && !files->in_is_readbl)						// first cmd infile ok : read stdin from infile
-		dup2(files->in_fd, 0);
-	if (cmd->index == 0 && files->in_is_readbl)							// first cmd infile no_redbl : 
-		return ;
-	if (cmd->index != 0)												// autres cmd : read stdin from pipe exit
-		dup2(pipefd[0], 0);
-	close(pipefd[1]);
-	close(pipefd[0]);
-	close_files(files);													// close infile n outfile
-	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1) 				// handles args error (ie "ls : no such file or dir: /trucmuachinchose")
-		perror("pipex");
-}
-
-void	exec_in_child(t_cmd *cmd, char **envp, t_files *files, int pipefd[2])
-{
-	if (!files)
-		return ;
 	if (cmd->exist)
 	{
 		if (!ft_strchr(cmd->cmd_name, '/'))
 			ft_fprintf(2, "pipex: command not found: %s\n", cmd->cmd_name);
 		else
 			ft_fprintf(2, "pipex: no such file or directory: %s\n", cmd->cmd_name);
-		return ;
+		exit(EXIT_FAILURE);
 	}
-	if (cmd->index && cmd->next)			// middle cmds
+}
+/*	stdout seems ok 
+	pb for mid cmd that reads on stdin :
+	- the alternation of pipes is in cause
+	- diff if mid comd are odd or even (one pie or the other)
+*/
+void	exec_mid_cmd(t_cmd *cmd, char **envp, t_files *files, int pipefd[])
+{
+	close(files->in_fd);
+	if (cmd->index % 2)
 	{
-		if (cmd->index % 2)
-		{
-			dup2(pipefd[READ_ENDA], 0);
-			dup2(pipefd[WRITE_ENDB], 1);
-			close(pipefd[READ_ENDA]);
-			close(pipefd[WRITE_ENDA]);
-			close(pipefd[READ_ENDB]);
-			close(pipefd[WRITE_ENDB]);
-		}
-		else
-		{
-			dup2(pipefd[READ_ENDB], 0);
-			dup2(pipefd[WRITE_ENDA], 1);
-			close(pipefd[READ_ENDA]);
-			close(pipefd[WRITE_ENDA]);
-			close(pipefd[READ_ENDB]);
-			close(pipefd[WRITE_ENDB]);
-		}
+		dup2(pipefd[READ_ENDA], 0);
+		dup2(pipefd[WRITE_ENDB], 1);
+		close(pipefd[READ_ENDB]);
+		close(pipefd[WRITE_ENDA]);
 	}
-	if (!cmd->index)						// first cmd
+	else
 	{
-		dup2(files->in_fd, 0);
+		dup2(pipefd[READ_ENDB], 0);
 		dup2(pipefd[WRITE_ENDA], 1);
 		close(pipefd[READ_ENDA]);
+		close(pipefd[WRITE_ENDB]);
 	}
-	if (!cmd->next)						// last cmd
+	cmd_exist_error(cmd);
+	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
+		perror("pipex");
+}
+
+void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int pipefd[])
+{
+	dup2(pipefd[WRITE_ENDA], 1);
+	close(pipefd[READ_ENDA]);
+	if (!files->here_doc)
 	{
-		dup2(files->out_fd, 1);
-		if (cmd->index % 2)
-		{
-			dup2(pipefd[READ_ENDA], 0);
-			close(pipefd[WRITE_ENDA]);
-		}
+		if (!files->in_exist && !files->in_is_readbl)
+			dup2(files->in_fd, 0);
 		else
 		{
-			dup2(pipefd[READ_ENDB], 0);
-			close(pipefd[WRITE_ENDB]);
+			close(pipefd[WRITE_ENDA]);
+			if (files->in_exist)
+				ft_fprintf(2, "pipex: no such file or directory: %s\n", files->infile);
+			else if (files->in_is_readbl)
+				ft_fprintf(2, "pipex: permission denied: %s\n", files->infile);
+			exit(EXIT_FAILURE);
 		}
 	}
+	cmd_exist_error(cmd);
+	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
+		perror("pipex");
+}
+
+void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int pipefd[])
+{
+	if (cmd->index % 2)
+	{
+		dup2(pipefd[READ_ENDA], 0);
+		close(pipefd[WRITE_ENDA]);
+		//close(pipefd[READ_ENDB]);
+		//close(pipefd[WRITE_ENDB]);
+	}
+	else
+	{
+		dup2(pipefd[READ_ENDB], 0);
+		close(pipefd[WRITE_ENDB]);
+		//close(pipefd[READ_ENDA]);
+		//close(pipefd[WRITE_ENDA]);
+	}
+	if (!files->out_is_writbl)
+		dup2(files->out_fd, 1);
+	else
+	{
+		close(pipefd[READ_ENDA]);
+		close(pipefd[READ_ENDB]);
+		ft_fprintf(2, "pipex: permission denied: %s\n", files->outfile);
+		exit(EXIT_FAILURE);
+	}
+	cmd_exist_error(cmd);
 	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
 		perror("pipex");
 }
@@ -104,7 +106,6 @@ void	exec_in_child(t_cmd *cmd, char **envp, t_files *files, int pipefd[2])
 int	pipex(t_cmd *cmd, char **envp, t_files files)
 {
 	pid_t	pid;
-	int		i;
 	int		child_status;
 	int		pipefd[4];
 
@@ -113,16 +114,24 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 		perror("pipex (in pipe())");
 		exit(EXIT_FAILURE);
 	}
-	i= 0;
 	while (cmd)
 	{
 		pid = fork();
-		if (pid > 0)
-			i++;
 		if (pid == -1)
 			perror("fork");
 		if (pid == 0)
-			exec_in_child(cmd, envp, &files, pipefd);
+		{
+			//close(pipefd[0]);
+			//close(pipefd[1]);
+			//close(pipefd[2]);
+			//close(pipefd[3]);
+			if (!cmd->index)
+				exec_first_cmd(cmd, envp, &files, pipefd);
+			else if (!cmd->next)
+				exec_last_cmd(cmd, envp, &files, pipefd);
+			else
+				exec_mid_cmd(cmd, envp, &files, pipefd);
+		}
 		cmd = cmd->next;
 	}
 	close(pipefd[1]);
@@ -130,9 +139,8 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 	close(pipefd[2]);
 	close(pipefd[3]);
 	close_files(&files);
-	while (i--)
-		waitpid(0, &child_status, 0);
-
+	while (waitpid(0, &child_status, 0) != -1)
+		;
 	return (child_status);
 }
 
