@@ -18,18 +18,22 @@ char	*launch_here_doc(t_files *files)
 	char	*data;
 
 	data = ft_strdup("");
+	if (!data)
+		return (NULL);
 	while (1)
 	{
 		ft_fprintf(1, "here_doc > ");
 		line = get_next_line(0);
 		if (!line)
-			break ;
+			return (free(data), NULL);
 		if (!ft_strncmp(line, files->limiter, ft_strlen(files->limiter)))
 		{
 			if (ft_strlen(line) == ft_strlen(files->limiter) + 1)
 				break ;
 		}
 		data = strj(data, line);
+		if (!data)
+			return (NULL);
 	}
 	ft_fprintf(1, "%s\n", data);
 	return (data);
