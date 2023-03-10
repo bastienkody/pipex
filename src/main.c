@@ -79,15 +79,11 @@ void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int pipefd[])
 	{
 		dup2(pipefd[READ_ENDA], 0);
 		close(pipefd[WRITE_ENDA]);
-		//close(pipefd[READ_ENDB]);
-		//close(pipefd[WRITE_ENDB]);
 	}
 	else
 	{
 		dup2(pipefd[READ_ENDB], 0);
 		close(pipefd[WRITE_ENDB]);
-		//close(pipefd[READ_ENDA]);
-		//close(pipefd[WRITE_ENDA]);
 	}
 	if (!files->out_is_writbl)
 		dup2(files->out_fd, 1);
