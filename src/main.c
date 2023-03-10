@@ -26,7 +26,7 @@ void	cmd_exist_error(t_cmd *cmd)
 /*	stdout seems ok 
 	pb for mid cmd that reads on stdin :
 	- the alternation of pipes is in cause
-	- diff if mid comd are odd or even (one pie or the other)
+	- diff if mid comd are odd or even (one pipe or the other)
 */
 void	exec_mid_cmd(t_cmd *cmd, char **envp, t_files *files, int pipefd[])
 {
@@ -121,10 +121,6 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 			perror("fork");
 		if (pid == 0)
 		{
-			//close(pipefd[0]);
-			//close(pipefd[1]);
-			//close(pipefd[2]);
-			//close(pipefd[3]);
 			if (!cmd->index)
 				exec_first_cmd(cmd, envp, &files, pipefd);
 			else if (!cmd->next)
