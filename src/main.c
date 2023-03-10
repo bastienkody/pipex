@@ -12,7 +12,7 @@
 
 #include "../inc/pipex.h"
 
-void	exec_in_child(t_cmd *cmd, char **envp, t_files *files, int pipefd[2])
+void	exec_in_child_OG(t_cmd *cmd, char **envp, t_files *files, int pipefd[2])
 {
 	if (cmd->exist)														// cmd error : shell cmd vs exec
 	{
@@ -44,16 +44,73 @@ void	exec_in_child(t_cmd *cmd, char **envp, t_files *files, int pipefd[2])
 		perror("pipex");
 }
 
+void	exec_in_child(t_cmd *cmd, char **envp, t_files *files, int pipefd[2])
+{
+	if (!files)
+		return ;
+	if (cmd->exist)
+	{
+		if (!ft_strchr(cmd->cmd_name, '/'))
+			ft_fprintf(2, "pipex: command not found: %s\n", cmd->cmd_name);
+		else
+			ft_fprintf(2, "pipex: no such file or directory: %s\n", cmd->cmd_name);
+		return ;
+	}
+	if (cmd->index && cmd->next)			// middle cmds
+	{
+		if (cmd->index % 2)
+		{
+			dup2(pipefd[READ_ENDA], 0);
+			dup2(pipefd[WRITE_ENDB], 1);
+			close(pipefd[READ_ENDA]);
+			close(pipefd[WRITE_ENDA]);
+			close(pipefd[READ_ENDB]);
+			close(pipefd[WRITE_ENDB]);
+		}
+		else
+		{
+			dup2(pipefd[READ_ENDB], 0);
+			dup2(pipefd[WRITE_ENDA], 1);
+			close(pipefd[READ_ENDA]);
+			close(pipefd[WRITE_ENDA]);
+			close(pipefd[READ_ENDB]);
+			close(pipefd[WRITE_ENDB]);
+		}
+	}
+	if (!cmd->index)						// first cmd
+	{
+		dup2(files->in_fd, 0);
+		dup2(pipefd[WRITE_ENDA], 1);
+		close(pipefd[READ_ENDA]);
+	}
+	if (!cmd->next)						// last cmd
+	{
+		dup2(files->out_fd, 1);
+		if (cmd->index % 2)
+		{
+			dup2(pipefd[READ_ENDA], 0);
+			close(pipefd[WRITE_ENDA]);
+		}
+		else
+		{
+			dup2(pipefd[READ_ENDB], 0);
+			close(pipefd[WRITE_ENDB]);
+		}
+	}
+	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
+		perror("pipex");
+}
+
 int	pipex(t_cmd *cmd, char **envp, t_files files)
 {
 	pid_t	pid;
 	int		i;
 	int		child_status;
-	int		pipefd[2];
+	int		pipefd[4];
 
-	if (pipe(pipefd) == -1)  // pipe(pipefd + 2) == -1
+	if (pipe(pipefd) == -1 || pipe(pipefd + 2) == -1)
 	{
-		perror("pipe");
+		perror("pipex (in pipe())");
 		exit(EXIT_FAILURE);
 	}
 	i= 0;
@@ -70,9 +127,12 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 	}
 	close(pipefd[1]);
 	close(pipefd[0]);
-	close_files(&files);	
+	close(pipefd[2]);
+	close(pipefd[3]);
+	close_files(&files);
 	while (i--)
 		waitpid(0, &child_status, 0);
+
 	return (child_status);
 }
 
