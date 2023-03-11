@@ -75,7 +75,8 @@ void	ft_lstprint(t_list *lst);
 /* aux */
 void	free_n_quit(t_list *path, t_cmd **cmd_list);
 int		arg_checker(int argc, char **argv);
-void	free_matrix(char **matrix);
+void	free_char_matrix(char **matrix);
+void	free_int_matrix(int **matrix, int size);
 
 /* t_cmd fct */
 t_cmd	*cmd_lstnew(char **cmd_spltd, int index);

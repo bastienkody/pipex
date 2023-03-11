@@ -95,22 +95,43 @@ void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int pipefd[])
 		perror("pipex");
 }
 
+/* malloc pipefd + pipes eachs pipe, via ptr -1 or -2 for error
+	maybe need to diff malloc and pipe error */
+int	get_pipefd(int **pipefd, t_cmd *cmd)
+{
+	int	i;
+	int	size;
+
+	pipefd = malloc(1 * sizeof(int *));
+	if (!pipefd)
+		return (-1);
+	i = 0;
+	size = cmd_lstsize(cmd);
+	while (i < size)
+	{
+		pipefd[i] = malloc(2 * sizeof(int));
+		if (!pipefd[i] || pipe(pipefd[i] == -1)) // malloc error or pipe error
+		{
+			perror("pipex");
+			free_int_matrix(pipefd, i);
+			return (-2);
+		}
+		// ou pipe in here? si marche pas tres bien plus haut ou gestion error pas top
+	}
+	return (0);
+}
+
 int	pipex(t_cmd *cmd, char **envp, t_files files)
 {
 	pid_t	pid;
 	int		child_status;
-	int		*pipefd;
+	int		**pipefd;
 
-	pipefd = malloc(cmd_lstsize(cmd) * sizeof(int));
-	if (!pipefd)
-		return (-4040);
+	pipefd = NULL;
+	if (get_pipefd(pipefd, cmd))
+		return (-1);
 	while (cmd)
 	{
-		if (pipe(pipefd) == -1 || pipe(pipefd + 2) == -1)
-		{
-			perror("pipex (in pipe())");
-			exit(EXIT_FAILURE);
-		}
 		pid = fork();
 		if (pid == -1)
 			perror("fork");

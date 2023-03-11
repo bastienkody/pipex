@@ -39,12 +39,22 @@ int	arg_checker(int argc, char **argv)
 	return (1);
 }
 
-void	free_matrix(char **matrix)
+void	free_char_matrix(char **matrix)
 {
 	int	i;
 
 	i = 0;
 	while (matrix[i])
+		free(matrix[i++]);
+	free(matrix);
+}
+
+void	free_int_matrix(int **matrix, int size)
+{
+	int	i;
+
+	i = 0;
+	while (i < size - 1)
 		free(matrix[i++]);
 	free(matrix);
 }

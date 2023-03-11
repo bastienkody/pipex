@@ -32,7 +32,7 @@ t_list	*path_to_llist(char **envp)
 		i = -1;
 		while (tmp[++i])
 			ft_lstadd_back(&path, ft_lstnew(ft_strdup(tmp[i])));
-		free_matrix(tmp);
+		free_char_matrix(tmp);
 	}
 	return (path);
 }
