@@ -31,7 +31,11 @@
 # define UNDRLN "\033[4m"
 # define END "\033[0m"
 
-/* pipe */
+/* pipes */
+# define READ_END 0
+# define WRITE_END 1
+
+/* pipe by two */
 # define READ_ENDA 0
 # define WRITE_ENDA 1
 # define READ_ENDB 2
@@ -77,6 +81,7 @@ void	free_matrix(char **matrix);
 t_cmd	*cmd_lstnew(char **cmd_spltd, int index);
 t_cmd	*cmd_lstadd_back(t_cmd **start, t_cmd *new);
 void	cmd_lstclear(t_cmd **start, void (*del)(void *));
+int		cmd_lstsize(t_cmd *start);
 
 /* parsing */
 t_list	*path_to_llist(char **envp);

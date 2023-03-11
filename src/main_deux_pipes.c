@@ -23,7 +23,11 @@ void	cmd_exist_error(t_cmd *cmd)
 		exit(EXIT_FAILURE);
 	}
 }
-
+/*	stdout seems ok 
+	pb for mid cmd that reads on stdin :
+	- the alternation of pipes is in cause
+	- diff if mid comd are odd or even (one pipe or the other)
+*/
 void	exec_mid_cmd(t_cmd *cmd, char **envp, t_files *files, int pipefd[])
 {
 	close(files->in_fd);
@@ -99,18 +103,15 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 {
 	pid_t	pid;
 	int		child_status;
-	int		*pipefd;
+	int		pipefd[4];
 
-	pipefd = malloc(cmd_lstsize(cmd) * sizeof(int));
-	if (!pipefd)
-		return (-4040);
+	if (pipe(pipefd) == -1 || pipe(pipefd + 2) == -1)
+	{
+		perror("pipex (in pipe())");
+		exit(EXIT_FAILURE);
+	}
 	while (cmd)
 	{
-		if (pipe(pipefd) == -1 || pipe(pipefd + 2) == -1)
-		{
-			perror("pipex (in pipe())");
-			exit(EXIT_FAILURE);
-		}
 		pid = fork();
 		if (pid == -1)
 			perror("fork");
