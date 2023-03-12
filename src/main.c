@@ -26,28 +26,26 @@ void	cmd_exist_error(t_cmd *cmd)
 
 void	exec_mid_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 {
-	ft_fprintf(2, "mid cmd\n");
+	ft_fprintf(2, "mid cmd %s %s\n", cmd->cmd_argv[0], cmd->cmd_argv[1]);
 	close(files->in_fd);
 	dup2(pipefd[cmd->index - 1][READ_END], 0);
 	dup2(pipefd[cmd->index][WRITE_END], 1);
-	close(pipefd[cmd->index - 1][READ_END]);
-	close(pipefd[cmd->index][WRITE_END]);
+	close(pipefd[cmd->index - 1][WRITE_END]);
+	close(pipefd[cmd->index][READ_END]);
 	cmd_exist_error(cmd);
 	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
+	{
 		perror("pipe mid");
+		exit(EXIT_FAILURE);
+	}
+	exit(EXIT_SUCCESS);
 }
 
 void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 {
-	int	dup_return;
-
-	ft_fprintf(2, "first cmd\n");
-	dup_return = dup2(pipefd[cmd->index][WRITE_END], 1);
-	if (dup_return > 0)
-		ft_fprintf(2, "dup return > 0 -->%i\n", dup_return);
-	else
-		ft_fprintf(2, "dup return <= 0\n");
-	ft_fprintf(2, "first after dup cmd \n");
+	ft_fprintf(2, "first cmd %s %s\n", cmd->cmd_argv[0], cmd->cmd_argv[1]);
+	if (dup2(pipefd[cmd->index][WRITE_END], 1) < 0)
+		ft_fprintf(2, "dup error first cmd\n");
 	close(pipefd[cmd->index][READ_END]);
 	if (!files->here_doc)
 	{
@@ -65,14 +63,18 @@ void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 	}
 	cmd_exist_error(cmd);
 	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
+	{
 		perror("pipex first");
+		ft_fprintf(2, "cmd_path:%s", cmd->cmd_path);
+		exit(EXIT_FAILURE);
+	}
+	exit(EXIT_SUCCESS);
 }
 
 void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 {
-	ft_fprintf(2, "last cmd \n");
+	ft_fprintf(2, "last cmd %s %s\n", cmd->cmd_argv[0], cmd->cmd_argv[1]);
 	dup2(pipefd[cmd->index - 1][READ_END], 0);
-	ft_fprintf(2, "last cmd after dup2\n");
 	close(pipefd[cmd->index - 1][WRITE_END]);
 	if (!files->out_is_writbl)
 		dup2(files->out_fd, 1);
@@ -84,10 +86,14 @@ void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 	}
 	cmd_exist_error(cmd);
 	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
+	{
 		perror("pipex last");
+		exit(EXIT_FAILURE);
+	}
+	exit(EXIT_SUCCESS);
 }
 
-/* malloc pipefd + pipes eachs pipe, via ptr -1 or -2 for error
+/* malloc pipefd + pipes eachs pipe,
 	maybe need to diff malloc and pipe error */
 int	**get_pipefd(t_cmd *cmd)
 {
@@ -95,11 +101,11 @@ int	**get_pipefd(t_cmd *cmd)
 	int	size;
 	int	**pipefd;
 
-	pipefd = malloc(1 * sizeof(int *));
+	size = cmd_lstsize(cmd);
+	pipefd = malloc((size - 1) * sizeof(int *));
 	if (!pipefd)
 		return (NULL);
 	i = 0;
-	size = cmd_lstsize(cmd);
 	while (i < size - 1)
 	{
 		pipefd[i] = malloc(2 * sizeof(int));
@@ -125,47 +131,49 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 	pid_t	pid;
 	int		child_status;
 	int		**pipefd;
+	int		lst_cmd_index;
 
+	lst_cmd_index = cmd_lstsize(cmd) - 1;
 	pipefd = get_pipefd(cmd);
 	if (!pipefd)
 		return (-1);
 	while (cmd)
 	{
 		pid = fork();
+		if (pid > 0)
+		{
+			if (cmd->index == 1)
+			{
+				close(files.in_fd);
+				close(pipefd[cmd->index - 1][WRITE_END]);
+			}
+			else if (cmd->index != 0 && cmd->next)
+			{
+				close(pipefd[cmd->index - 2][READ_END]);
+				close(pipefd[cmd->index - 1][WRITE_END]);
+			}
+		}
 		if (pid == -1)
 			perror("fork");
 		if (pid == 0)
 		{
-			if (!cmd->index)
+			if (cmd->index == 0)
 				exec_first_cmd(cmd, envp, &files, pipefd);
-			else if (!cmd->next)
-				exec_last_cmd(cmd, envp, &files, pipefd);
-			else
+			else if (cmd->next)
 				exec_mid_cmd(cmd, envp, &files, pipefd);
-		}
-		/*if (pid > 0)
-		{
-			if (!cmd->index)
-			{
-				close(files.in_fd);
-				close(pipefd[cmd->index][WRITE_END]);
-			}
-			else if (!cmd->next)
-			{
-				close(files.out_fd);
-				close(pipefd[cmd->index - 1][READ_END]);
-			}
 			else
-			{
-				close(pipefd[cmd->index - 1][READ_END]);
-				close(pipefd[cmd->index][WRITE_END]);
-			}
-		}*/
+				exec_last_cmd(cmd, envp, &files, pipefd);
+		}
 		cmd = cmd->next;
 	}
 	while (waitpid(0, &child_status, 0) != -1)
 		;
-	close_files(&files);
+	if (pid > 0)
+	{
+		close(files.out_fd);
+		close(pipefd[lst_cmd_index - 1][READ_END]);
+		close_files(&files);
+	}
 	return (child_status);
 }
 
@@ -182,7 +190,7 @@ int	main(int argc, char **argv, char **envp)
 	files = file_parser(argc, argv);
 	cmd_list = cmd_parser(argv, files, path);
 	//print_files(files);
-	//print_cmd_list(cmd_list);
+	print_cmd_list(cmd_list);
 	lst_cmd_ex_code = pipex(cmd_list, envp, files);
 	close_files(&files);
 	free_n_quit(path, &cmd_list);
