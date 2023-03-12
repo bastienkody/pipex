@@ -67,7 +67,7 @@ void	cmd_lstdelone(t_cmd *cmd, void (*del)(void *))
 {
 	if (!del || !cmd)
 		return ;
-	free_matrix(cmd->cmd_argv);
+	free_char_matrix(cmd->cmd_argv);
 	(*del)(cmd->cmd_path);
 	free(cmd);
 }

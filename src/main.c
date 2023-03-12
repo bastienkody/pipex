@@ -24,39 +24,38 @@ void	cmd_exist_error(t_cmd *cmd)
 	}
 }
 
-void	exec_mid_cmd(t_cmd *cmd, char **envp, t_files *files, int pipefd[])
+void	exec_mid_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 {
+	ft_fprintf(2, "mid cmd\n");
 	close(files->in_fd);
-	if (cmd->index % 2)
-	{
-		dup2(pipefd[READ_ENDA], 0);
-		dup2(pipefd[WRITE_ENDB], 1);
-		close(pipefd[READ_ENDB]);
-		close(pipefd[WRITE_ENDA]);
-	}
-	else
-	{
-		dup2(pipefd[READ_ENDB], 0);
-		dup2(pipefd[WRITE_ENDA], 1);
-		close(pipefd[READ_ENDA]);
-		close(pipefd[WRITE_ENDB]);
-	}
+	dup2(pipefd[cmd->index - 1][READ_END], 0);
+	dup2(pipefd[cmd->index][WRITE_END], 1);
+	close(pipefd[cmd->index - 1][READ_END]);
+	close(pipefd[cmd->index][WRITE_END]);
 	cmd_exist_error(cmd);
 	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
-		perror("pipex");
+		perror("pipe mid");
 }
 
-void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int pipefd[])
+void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 {
-	dup2(pipefd[WRITE_ENDA], 1);
-	close(pipefd[READ_ENDA]);
+	int	dup_return;
+
+	ft_fprintf(2, "first cmd\n");
+	dup_return = dup2(pipefd[cmd->index][WRITE_END], 1);
+	if (dup_return > 0)
+		ft_fprintf(2, "dup return > 0 -->%i\n", dup_return);
+	else
+		ft_fprintf(2, "dup return <= 0\n");
+	ft_fprintf(2, "first after dup cmd \n");
+	close(pipefd[cmd->index][READ_END]);
 	if (!files->here_doc)
 	{
 		if (!files->in_exist && !files->in_is_readbl)
 			dup2(files->in_fd, 0);
 		else
 		{
-			close(pipefd[WRITE_ENDA]);
+			close(pipefd[cmd->index][WRITE_END]);
 			if (files->in_exist)
 				ft_fprintf(2, "pipex: no such file or directory: %s\n", files->infile);
 			else if (files->in_is_readbl)
@@ -66,69 +65,69 @@ void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int pipefd[])
 	}
 	cmd_exist_error(cmd);
 	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
-		perror("pipex");
+		perror("pipex first");
 }
 
-void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int pipefd[])
+void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 {
-	if (cmd->index % 2)
-	{
-		dup2(pipefd[READ_ENDA], 0);
-		close(pipefd[WRITE_ENDA]);
-	}
-	else
-	{
-		dup2(pipefd[READ_ENDB], 0);
-		close(pipefd[WRITE_ENDB]);
-	}
+	ft_fprintf(2, "last cmd \n");
+	dup2(pipefd[cmd->index - 1][READ_END], 0);
+	ft_fprintf(2, "last cmd after dup2\n");
+	close(pipefd[cmd->index - 1][WRITE_END]);
 	if (!files->out_is_writbl)
 		dup2(files->out_fd, 1);
 	else
 	{
-		close(pipefd[READ_ENDA]);
-		close(pipefd[READ_ENDB]);
+		close(pipefd[cmd->index - 1][READ_END]);
 		ft_fprintf(2, "pipex: permission denied: %s\n", files->outfile);
 		exit(EXIT_FAILURE);
 	}
 	cmd_exist_error(cmd);
 	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
-		perror("pipex");
+		perror("pipex last");
 }
 
 /* malloc pipefd + pipes eachs pipe, via ptr -1 or -2 for error
 	maybe need to diff malloc and pipe error */
-int	get_pipefd(int **pipefd, t_cmd *cmd)
+int	**get_pipefd(t_cmd *cmd)
 {
 	int	i;
 	int	size;
+	int	**pipefd;
 
 	pipefd = malloc(1 * sizeof(int *));
 	if (!pipefd)
-		return (-1);
+		return (NULL);
 	i = 0;
 	size = cmd_lstsize(cmd);
-	while (i < size)
+	while (i < size - 1)
 	{
 		pipefd[i] = malloc(2 * sizeof(int));
-		if (!pipefd[i] || pipe(pipefd[i] == -1)) // malloc error or pipe error
+		if (!pipefd[i] || pipe(pipefd[i]) == -1)
 		{
 			perror("pipex");
 			free_int_matrix(pipefd, i);
-			return (-2);
+			return (NULL);
 		}
-		// ou pipe in here? si marche pas tres bien plus haut ou gestion error pas top
+		else
+		{
+			ft_fprintf(2, "pipe%i, read:%i\n", i, pipefd[i][0]);
+			ft_fprintf(2, "pipe%i, write:%i\n", i, pipefd[i][1]);
+		}
+		i++;
 	}
-	return (0);
+	return (pipefd);
 }
 
+/* each cmd reads in pipefd[index-1] and write in pipefd[index] ? */
 int	pipex(t_cmd *cmd, char **envp, t_files files)
 {
 	pid_t	pid;
 	int		child_status;
 	int		**pipefd;
 
-	pipefd = NULL;
-	if (get_pipefd(pipefd, cmd))
+	pipefd = get_pipefd(cmd);
+	if (!pipefd)
 		return (-1);
 	while (cmd)
 	{
@@ -144,15 +143,29 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 			else
 				exec_mid_cmd(cmd, envp, &files, pipefd);
 		}
+		/*if (pid > 0)
+		{
+			if (!cmd->index)
+			{
+				close(files.in_fd);
+				close(pipefd[cmd->index][WRITE_END]);
+			}
+			else if (!cmd->next)
+			{
+				close(files.out_fd);
+				close(pipefd[cmd->index - 1][READ_END]);
+			}
+			else
+			{
+				close(pipefd[cmd->index - 1][READ_END]);
+				close(pipefd[cmd->index][WRITE_END]);
+			}
+		}*/
 		cmd = cmd->next;
 	}
-	close(pipefd[1]);
-	close(pipefd[0]);
-	close(pipefd[2]);
-	close(pipefd[3]);
-	close_files(&files);
 	while (waitpid(0, &child_status, 0) != -1)
 		;
+	close_files(&files);
 	return (child_status);
 }
 

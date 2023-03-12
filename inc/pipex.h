@@ -35,12 +35,6 @@
 # define READ_END 0
 # define WRITE_END 1
 
-/* pipe by two */
-# define READ_ENDA 0
-# define WRITE_ENDA 1
-# define READ_ENDB 2
-# define WRITE_ENDB 3
-
 typedef	struct files
 {
 	char	*infile;
