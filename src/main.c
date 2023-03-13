@@ -12,7 +12,7 @@
 
 #include "../inc/pipex.h"
 
-void	cmd_exist_error(t_cmd *cmd)
+void	execute(t_cmd *cmd, char **envp)
 {
 	if (cmd->exist)
 	{
@@ -22,28 +22,27 @@ void	cmd_exist_error(t_cmd *cmd)
 			ft_fprintf(2, "pipex: no such file or directory: %s\n", cmd->cmd_name);
 		exit(EXIT_FAILURE);
 	}
+	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
+	{
+		//perror("pipex (at execution)");
+		//exit(EXIT_FAILURE);
+	}
+	//exit(EXIT_SUCCESS);
 }
 
-void	exec_mid_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
+void	exec_mid_cmd(t_cmd *cmd, char **envp, int **pipefd)
 {
-	ft_fprintf(2, "mid cmd %s %s\n", cmd->cmd_argv[0], cmd->cmd_argv[1]);
-	close(files->in_fd);
+	ft_fprintf(2, "mid cmd %s %s (%i)\n", cmd->cmd_argv[0], cmd->cmd_argv[1], getpid());
 	dup2(pipefd[cmd->index - 1][READ_END], 0);
 	dup2(pipefd[cmd->index][WRITE_END], 1);
 	close(pipefd[cmd->index - 1][WRITE_END]);
 	close(pipefd[cmd->index][READ_END]);
-	cmd_exist_error(cmd);
-	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
-	{
-		perror("pipe mid");
-		exit(EXIT_FAILURE);
-	}
-	exit(EXIT_SUCCESS);
+	execute(cmd, envp);
 }
 
 void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 {
-	ft_fprintf(2, "first cmd %s %s\n", cmd->cmd_argv[0], cmd->cmd_argv[1]);
+	ft_fprintf(2, "first cmd %s %s (%i)\n", cmd->cmd_argv[0], cmd->cmd_argv[1], getpid());
 	if (dup2(pipefd[cmd->index][WRITE_END], 1) < 0)
 		ft_fprintf(2, "dup error first cmd\n");
 	close(pipefd[cmd->index][READ_END]);
@@ -61,19 +60,12 @@ void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 			exit(EXIT_FAILURE);
 		}
 	}
-	cmd_exist_error(cmd);
-	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
-	{
-		perror("pipex first");
-		ft_fprintf(2, "cmd_path:%s", cmd->cmd_path);
-		exit(EXIT_FAILURE);
-	}
-	exit(EXIT_SUCCESS);
+	execute(cmd, envp);
 }
 
 void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 {
-	ft_fprintf(2, "last cmd %s %s\n", cmd->cmd_argv[0], cmd->cmd_argv[1]);
+	ft_fprintf(2, "last cmd %s %s (%i)\n", cmd->cmd_argv[0], cmd->cmd_argv[1], getpid());
 	dup2(pipefd[cmd->index - 1][READ_END], 0);
 	close(pipefd[cmd->index - 1][WRITE_END]);
 	if (!files->out_is_writbl)
@@ -84,13 +76,7 @@ void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 		ft_fprintf(2, "pipex: permission denied: %s\n", files->outfile);
 		exit(EXIT_FAILURE);
 	}
-	cmd_exist_error(cmd);
-	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
-	{
-		perror("pipex last");
-		exit(EXIT_FAILURE);
-	}
-	exit(EXIT_SUCCESS);
+	execute(cmd, envp);
 }
 
 /* malloc pipefd + pipes eachs pipe,
@@ -115,11 +101,11 @@ int	**get_pipefd(t_cmd *cmd)
 			free_int_matrix(pipefd, i);
 			return (NULL);
 		}
-		else
+		/*else
 		{
 			ft_fprintf(2, "pipe%i, read:%i\n", i, pipefd[i][0]);
 			ft_fprintf(2, "pipe%i, write:%i\n", i, pipefd[i][1]);
-		}
+		}*/
 		i++;
 	}
 	return (pipefd);
@@ -132,6 +118,7 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 	int		child_status;
 	int		**pipefd;
 	int		lst_cmd_index;
+	int		w_pid;
 
 	lst_cmd_index = cmd_lstsize(cmd) - 1;
 	pipefd = get_pipefd(cmd);
@@ -140,6 +127,8 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 	while (cmd)
 	{
 		pid = fork();
+		if (pid == -1)
+			perror("fork");
 		if (pid > 0)
 		{
 			if (cmd->index == 1)
@@ -147,33 +136,27 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 				close(files.in_fd);
 				close(pipefd[cmd->index - 1][WRITE_END]);
 			}
-			else if (cmd->index != 0 && cmd->next)
+			else if (cmd->index != 0)
 			{
 				close(pipefd[cmd->index - 2][READ_END]);
 				close(pipefd[cmd->index - 1][WRITE_END]);
 			}
 		}
-		if (pid == -1)
-			perror("fork");
 		if (pid == 0)
 		{
 			if (cmd->index == 0)
 				exec_first_cmd(cmd, envp, &files, pipefd);
 			else if (cmd->next)
-				exec_mid_cmd(cmd, envp, &files, pipefd);
+				exec_mid_cmd(cmd, envp, pipefd);
 			else
 				exec_last_cmd(cmd, envp, &files, pipefd);
 		}
 		cmd = cmd->next;
 	}
-	while (waitpid(0, &child_status, 0) != -1)
-		;
-	if (pid > 0)
-	{
-		close(files.out_fd);
-		close(pipefd[lst_cmd_index - 1][READ_END]);
-		close_files(&files);
-	}
+	close(files.out_fd);
+	close(pipefd[lst_cmd_index - 1][READ_END]);
+	while ((w_pid = waitpid(0, &child_status, 0)) != -1)
+		ft_fprintf(2, "during waitpid (%i finished)\n", w_pid);
 	return (child_status);
 }
 
@@ -190,7 +173,7 @@ int	main(int argc, char **argv, char **envp)
 	files = file_parser(argc, argv);
 	cmd_list = cmd_parser(argv, files, path);
 	//print_files(files);
-	print_cmd_list(cmd_list);
+	//print_cmd_list(cmd_list);
 	lst_cmd_ex_code = pipex(cmd_list, envp, files);
 	close_files(&files);
 	free_n_quit(path, &cmd_list);
