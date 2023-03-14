@@ -32,20 +32,22 @@ void	execute(t_cmd *cmd, char **envp)
 
 void	exec_mid_cmd(t_cmd *cmd, char **envp, int **pipefd)
 {
-	ft_fprintf(2, "mid cmd %s %s (%i)\n", cmd->cmd_argv[0], cmd->cmd_argv[1], getpid());
+	//ft_fprintf(2, "mid cmd %s %s (%i)\n", cmd->cmd_argv[0], cmd->cmd_argv[1], getpid());
 	close(pipefd[cmd->index - 1][WRITE_END]);
 	close(pipefd[cmd->index][READ_END]);
-	dup2(pipefd[cmd->index - 1][READ_END], 0);
-	dup2(pipefd[cmd->index][WRITE_END], 1);
-		execute(cmd, envp);
+	if (dup2(pipefd[cmd->index - 1][READ_END], 0) == -1)
+		ft_fprintf(2, "dup error on pipe %i READ END before exec cmd %s\n", cmd->index - 1, cmd->cmd_name);
+	if (dup2(pipefd[cmd->index][WRITE_END], 1) == -1)
+		ft_fprintf(2, "dup error on pipe %i WRITE END before exec cmd %s\n", cmd->index, cmd->cmd_name);
+	execute(cmd, envp);
 }
 
 void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 {
-	ft_fprintf(2, "first cmd %s %s (%i)\n", cmd->cmd_argv[0], cmd->cmd_argv[1], getpid());
+	//ft_fprintf(2, "first cmd %s %s (%i)\n", cmd->cmd_argv[0], cmd->cmd_argv[1], getpid());
 	close(pipefd[cmd->index][READ_END]);
 	if (dup2(pipefd[cmd->index][WRITE_END], 1) < 0)
-		ft_fprintf(2, "dup error first cmd\n");
+		ft_fprintf(2, "dup error on pipe %i WRITE END before exec first cmd %s\n", cmd->index, cmd->cmd_name);
 	if (!files->here_doc)
 	{
 		if (!files->in_exist && !files->in_is_readbl)
@@ -65,7 +67,7 @@ void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 
 void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 {
-	ft_fprintf(2, "last cmd %s %s (%i)\n", cmd->cmd_argv[0], cmd->cmd_argv[1], getpid());
+	//ft_fprintf(2, "last cmd %s %s (%i)\n", cmd->cmd_argv[0], cmd->cmd_argv[1], getpid());
 	close(pipefd[cmd->index - 1][WRITE_END]);
 	dup2(pipefd[cmd->index - 1][READ_END], 0);
 	if (!files->out_is_writbl)
@@ -101,11 +103,11 @@ int	**get_pipefd(t_cmd *cmd)
 			free_int_matrix(pipefd, i);
 			return (NULL);
 		}
-		/*else
+		else
 		{
 			ft_fprintf(2, "pipe%i, read:%i\n", i, pipefd[i][0]);
 			ft_fprintf(2, "pipe%i, write:%i\n", i, pipefd[i][1]);
-		}*/
+		}
 		i++;
 	}
 	return (pipefd);
@@ -133,7 +135,8 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 		{
 			if (cmd->index == 1)
 			{
-				close(files.in_fd);
+				if (files.in_fd > 0)
+					close(files.in_fd);
 				close(pipefd[cmd->index - 1][WRITE_END]);
 			}
 			else if (cmd->index != 0)
@@ -153,13 +156,15 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 		}
 		cmd = cmd->next;
 	}
-	close(files.out_fd);
+	if (files.out_fd > 0)
+		close(files.out_fd);
 	close(pipefd[lst_cmd_index - 1][READ_END]);
 	while ((w_pid = waitpid(0, &child_status, WNOHANG)) != -1)
 	{
 		if (w_pid != 0)
-			ft_fprintf(2, "during waitpid (%i finished)\n", w_pid);
+			;//ft_fprintf(2, "during waitpid (%i finished)\n", w_pid);
 	}
+	free_int_matrix(pipefd, lst_cmd_index + 1);
 	return (child_status);
 }
 
