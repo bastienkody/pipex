@@ -87,4 +87,10 @@ void	set_cmd_infos(t_cmd **start, t_list *path);
 t_files	file_parser(int argc, char **argv);
 void	close_files(t_files *files);
 
+/* execution */
+void	execute(t_cmd *cmd, char **envp);
+void	exec_mid_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd);
+void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd);
+void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd);
+
 #endif
