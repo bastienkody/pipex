@@ -12,8 +12,9 @@
 
 #include "../inc/pipex.h"
 
-void	free_n_quit(t_list *path, t_cmd **cmd_list)
+void	close_n_free(t_list *path, t_cmd **cmd_list, t_files *files)
 {
+	close_files(files);
 	ft_lstclear(&path, free);
 	cmd_lstclear(cmd_list, free);
 }
@@ -39,6 +40,24 @@ int	arg_checker(int argc, char **argv)
 	return (1);
 }
 
+int	analyze_ex_code(int status)
+{
+	ft_fprintf(2, "exit status:%i\n", status);
+	if (WIFEXITED(status))
+	{
+		ft_fprintf(2, "WIFEXITED(status):%i\n", WIFEXITED(status));
+		ft_fprintf(2, "WEXITSTATUS(status):%i\n", WEXITSTATUS(status));
+		return (WEXITSTATUS(status));
+	}
+	if (WIFSIGNALED(status))
+	{
+		ft_fprintf(2, "WIFSIGNALED(status):%i\n", WIFSIGNALED(status));
+		ft_fprintf(2, "WTERMSIG(status):%i\n", WTERMSIG(status));
+		return (WTERMSIG(status));
+	}
+	return (status);
+}
+
 void	free_char_matrix(char **matrix)
 {
 	int	i;
@@ -57,36 +76,4 @@ void	free_int_matrix(int **matrix, int size)
 	while (i < size - 1)
 		free(matrix[i++]);
 	free(matrix);
-}
-
-void	exec_in_child_OG(t_cmd *cmd, char **envp, t_files *files, int pipefd[2])
-{
-	if (cmd->exist)														// cmd error : shell cmd vs exec
-	{
-		if (!ft_strchr(cmd->cmd_name, '/'))
-			ft_fprintf(2, "pipex: command not found: %s\n", cmd->cmd_name);
-		else
-			ft_fprintf(2, "pipex: no such file or directory: %s\n", cmd->cmd_name);
-		return ;
-	}
-	if (cmd->next)														// pas la derniere commande : stdout to pipe entry
-		dup2(pipefd[1], 1);
-	else if (!files->out_is_writbl)										// derniere cmd et outfile writbl (wether just created or existing)
-		dup2(files->out_fd, 1);
-	if (!files->out_exist && files->out_is_writbl && cmd->next == NULL)	// last cmd, outfile no_wrtbl : error printing + exit (no exec of lst cmd)
-	{
-			ft_fprintf(2, "pipex: permission deNied (outfile ; lst cmd wont be executted): %s for cmd %s\n", files->outfile, cmd->cmd_path);
-			return ;
-	}
-	if (cmd->index == 0 && !files->in_is_readbl)						// first cmd infile ok : read stdin from infile
-		dup2(files->in_fd, 0);
-	if (cmd->index == 0 && files->in_is_readbl)							// first cmd infile no_redbl : 
-		return ;
-	if (cmd->index != 0)												// autres cmd : read stdin from pipe exit
-		dup2(pipefd[0], 0);
-	close(pipefd[1]);
-	close(pipefd[0]);
-	close_files(files);													// close infile n outfile
-	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1) 				// handles args error (ie "ls : no such file or dir: /trucmuachinchose")
-		perror("pipex");
 }

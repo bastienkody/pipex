@@ -67,8 +67,9 @@ void	print_cmd_list(t_cmd *start);
 void	ft_lstprint(t_list *lst);
 
 /* aux */
-void	free_n_quit(t_list *path, t_cmd **cmd_list);
+void	close_n_free(t_list *path, t_cmd **cmd_list, t_files *files);
 int		arg_checker(int argc, char **argv);
+int		analyze_ex_code(int status);
 void	free_char_matrix(char **matrix);
 void	free_int_matrix(int **matrix, int size);
 

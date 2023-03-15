@@ -64,6 +64,12 @@ void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 			exit(EXIT_FAILURE);
 		}
 	}
+	else
+	{
+		//create pipe (+int fd[2])
+		//dup write end for here_doc_fct
+		//call here_doc with write end of pipe
+	}
 	execute(cmd, envp);
 }
 

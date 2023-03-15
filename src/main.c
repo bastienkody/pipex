@@ -92,15 +92,19 @@ int	main(int argc, char **argv, char **envp)
 	t_list	*path;
 	t_files	files;
 	t_cmd	*cmd_list;
-	int		lst_cmd_ex_code;
+	int		ex_code;
 
 	if (!arg_checker(argc, argv))
 		return (1);
-	path = path_to_llist(envp);
-	files = file_parser(argc, argv);
+	files = file_parser(argc, argv);				// no malloc but open can have failed
+	path = path_to_llist(envp);						// malloc error handled with exit_failure (+free what has been malloced)
 	cmd_list = cmd_parser(argv, files, path);
-	lst_cmd_ex_code = pipex(cmd_list, envp, files);
-	close_files(&files);
-	free_n_quit(path, &cmd_list);
-	return (lst_cmd_ex_code);
+	if (!cmd_list)
+	{
+		close_n_free(path, &cmd_list, &files);
+		return (-1);
+	}
+	ex_code = pipex(cmd_list, envp, files);
+	close_n_free(path, &cmd_list, &files);
+	return (analyze_ex_code(ex_code));
 }
