@@ -22,12 +22,9 @@ void	execute(t_cmd *cmd, char **envp)
 			ft_fprintf(2, "pipex: no such file or directory: %s\n", cmd->cmd_name);
 		exit(EXIT_FAILURE);
 	}
-	if (execve(cmd->cmd_path, cmd->cmd_argv, envp) == -1)
-	{
-		//perror("pipex (at execution)");
-		//exit(EXIT_FAILURE);
-	}
-	//exit(EXIT_SUCCESS);
+	execve(cmd->cmd_path, cmd->cmd_argv, envp);
+	perror("pipex (execve)");
+	exit(EXIT_FAILURE);
 }
 
 void	exec_mid_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
