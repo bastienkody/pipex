@@ -81,8 +81,8 @@ int	pipex(t_cmd *cmd, char **envp, t_files files)
 		cmd = cmd->next;
 	}
 	close(pipefd[lst_cmd_index - 1][READ_END]);
-	while ((waitpid(0, &child_status, WNOHANG)) != -1)
-		;
+	waitpid(-1, &child_status, 0);
+	/* instead of while waitpid ... != 1 ; */
 	free_int_matrix(pipefd, lst_cmd_index + 1);
 	return (child_status);
 }
