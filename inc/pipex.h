@@ -47,6 +47,7 @@ typedef	struct files
 	int		out_fd;
 	int		here_doc;
 	char	*limiter;
+	int		cmd_nb;
 }				t_files;
 
 typedef	struct s_cmd
@@ -60,6 +61,17 @@ typedef	struct s_cmd
 	struct s_cmd	*next;
 }					t_cmd;
 
+typedef struct s_info
+{
+	t_files	*files;
+	t_list	*path;
+	t_cmd	*cmd;
+	t_cmd	*cmd_start;
+	int		**pipefd;
+	int		cmd_nb;
+	int		exit_code;
+}				t_info;
+
 /* printers */
 void	print_path(t_list *path);
 void	print_files(t_files files);
@@ -67,7 +79,7 @@ void	print_cmd_list(t_cmd *start);
 void	ft_lstprint(t_list *lst);
 
 /* aux */
-void	close_n_free(t_list *path, t_cmd **cmd_list, t_files *files);
+void	close_n_free(t_info *info);
 int		arg_checker(int argc, char **argv);
 int		analyze_ex_code(int status);
 void	free_char_matrix(char **matrix);
@@ -80,18 +92,21 @@ void	cmd_lstclear(t_cmd **start, void (*del)(void *));
 int		cmd_lstsize(t_cmd *start);
 
 /* parsing */
-t_list	*path_to_llist(char **envp);
-t_cmd	*cmd_parser(char **argv, t_files files, t_list *path);
-void	set_cmd_infos(t_cmd **start, t_list *path);
+t_list	*path_to_llist(char **envp, t_info *info);
+t_cmd	*cmd_parser(char **argv, t_info *info);
 
 /* files */
-t_files	file_parser(int argc, char **argv);
+t_files	*file_parser(int argc, char **argv);
 void	close_files(t_files *files);
 
+/* fd */
+int		**get_pipefd(t_info *info);
+void	close_pipefd(int cmd_nb, int **pipefd);
+
 /* execution */
-void	execute(t_cmd *cmd, char **envp);
-void	exec_mid_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd);
-void	exec_first_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd);
-void	exec_last_cmd(t_cmd *cmd, char **envp, t_files *files, int **pipefd);
+void	execute(t_info *info, char **envp);
+void	dup_first_cmd(t_info *info);
+void	dup_mid_cmd(t_info *info);
+void	dup_last_cmd(t_info *info);
 
 #endif

@@ -12,11 +12,23 @@
 
 #include "../inc/pipex.h"
 
-void	close_n_free(t_list *path, t_cmd **cmd_list, t_files *files)
+void	close_n_free(t_info *info) 
 {
-	close_files(files);
-	ft_lstclear(&path, free);
-	cmd_lstclear(cmd_list, free);
+	if (info->files)
+	{
+		close_files(info->files);
+		free(info->files);
+	}
+	if (info->cmd_nb && info->pipefd)
+	{
+		close_pipefd(info->cmd_nb, info->pipefd);
+		free_int_matrix(info->pipefd, info->cmd_nb);
+	}
+	if (info->path)
+		ft_lstclear(&(info->path), &free);
+	if (info->cmd_start)
+		cmd_lstclear(&(info->cmd_start), &free);
+	free(info);
 }
 
 int	arg_checker(int argc, char **argv)
