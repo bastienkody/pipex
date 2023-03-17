@@ -122,11 +122,11 @@ int	**get_pipefd(t_info *info)
 			free_int_matrix(pipefd, i);
 			return (NULL);
 		}
-		else
+		/*else
 		{
 			ft_fprintf(2, "pipe%i, read:%i\n", i, pipefd[i][0]);
 			ft_fprintf(2, "pipe%i, write:%i\n", i, pipefd[i][1]);
-		}
+		}*/
 		i++;
 	}
 	return (pipefd);

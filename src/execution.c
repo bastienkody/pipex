@@ -15,11 +15,12 @@
 //void	execute(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 void	execute(t_info *info, char **envp)
 {
-	char	*c_path;
-	char	**c_argv;
-
-	c_path = info->cmd->cmd_path;
-	c_argv = info->cmd->cmd_argv;
+	if (info->cmd->index == 0)
+		dup_first_cmd(info);
+	else if (info->cmd->next)
+		dup_mid_cmd(info);
+	else
+		dup_last_cmd(info);
 	if (info->cmd->exist)
 	{
 		if (!ft_strchr(info->cmd->cmd_name, '/'))
@@ -29,17 +30,9 @@ void	execute(t_info *info, char **envp)
 		close_n_free(info);
 		exit(EXIT_FAILURE);
 	}
-	if (info->cmd->index == 0)
-		dup_first_cmd(info);
-	else if (info->cmd->next)
-		dup_mid_cmd(info);
-	else
-		dup_last_cmd(info);
 	close_pipefd(info->cmd_nb, info->pipefd);
 	close_files(info->files);
-	// free everything mallocated in the parent (line beside instead of both up)
-	//close_n_free(info);
-	execve(c_path, c_argv, envp);
+	execve(info->cmd->cmd_path, info->cmd->cmd_argv, envp);
 	perror("pipex (execve)");
 	exit(EXIT_FAILURE);
 }
@@ -97,6 +90,7 @@ void	dup_last_cmd(t_info *info)
 	{
 		close(info->pipefd[info->cmd->index - 1][READ_END]);
 		ft_fprintf(2, "pipex: permission denied: %s\n", info->files->outfile);
+		info->exit_code = 1;
 		exit(EXIT_FAILURE);
 	}
 }

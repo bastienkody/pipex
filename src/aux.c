@@ -52,9 +52,16 @@ int	arg_checker(int argc, char **argv)
 	return (1);
 }
 
-int	analyze_ex_code(int status)
+int	analyze_ex_code(int status, t_info *info)
 {
 	ft_fprintf(2, "exit status:%i\n", status);
+	if (info->files->out_is_writbl)
+		return (1);
+	info->cmd = cmd_lstlast(info->cmd_start);
+	if (info->cmd->exist)
+		return (127);
+	if (!info->cmd->exist && status != 2)
+		return (0);
 	if (WIFEXITED(status))
 	{
 		ft_fprintf(2, "WIFEXITED(status):%i\n", WIFEXITED(status));

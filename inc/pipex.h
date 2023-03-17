@@ -81,12 +81,13 @@ void	ft_lstprint(t_list *lst);
 /* aux */
 void	close_n_free(t_info *info);
 int		arg_checker(int argc, char **argv);
-int		analyze_ex_code(int status);
+int		analyze_ex_code(int status, t_info *info);
 void	free_char_matrix(char **matrix);
 void	free_int_matrix(int **matrix, int size);
 
 /* t_cmd fct */
 t_cmd	*cmd_lstnew(char **cmd_spltd, int index);
+t_cmd	*cmd_lstlast(t_cmd *start);
 t_cmd	*cmd_lstadd_back(t_cmd **start, t_cmd *new);
 void	cmd_lstclear(t_cmd **start, void (*del)(void *));
 int		cmd_lstsize(t_cmd *start);

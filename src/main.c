@@ -39,7 +39,7 @@ void	pipex(t_info *info, char **envp)
 	close(info->pipefd[info->cmd_nb - 2][READ_END]);	// still needed? i guess it might
 	while (waitpid(-1, &child_status, 0) != -1)
 		;
-	info->exit_code = analyze_ex_code(child_status);
+	info->exit_code = analyze_ex_code(child_status, info);
 }
 
 t_info	*init_info(int argc, char **argv, char **envp)
@@ -59,6 +59,7 @@ t_info	*init_info(int argc, char **argv, char **envp)
 	info->cmd = cmd_parser(argv, info);
 	info->cmd_start = info->cmd;
 	info->cmd_nb = cmd_lstsize(info->cmd_start);
+	info->exit_code = 0;
 	if (!info->cmd)
 	{
 		close_n_free(info);
@@ -70,6 +71,7 @@ t_info	*init_info(int argc, char **argv, char **envp)
 int	main(int argc, char **argv, char **envp)
 {
 	t_info	*info;
+	int		exit_code;
 
 	if (!arg_checker(argc, argv))
 		return (-1);
@@ -83,6 +85,7 @@ int	main(int argc, char **argv, char **envp)
 		return (-3);
 	}
 	pipex(info, envp);
+	exit_code = info->exit_code;
 	close_n_free(info);
-	return (info->exit_code);
+	return (exit_code);
 }
