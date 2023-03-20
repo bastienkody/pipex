@@ -8,7 +8,8 @@ SRCS =	${SRC_DIR}main.c\
 		${SRC_DIR}printers.c\
 		${SRC_DIR}t_cmd_utils.c\
 		${SRC_DIR}execution.c\
-		${SRC_DIR}aux.c
+		${SRC_DIR}aux.c\
+		${SRC_DIR}aux2.c
 
 OBJS =	${SRCS:.c=.o}
 

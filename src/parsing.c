@@ -143,10 +143,7 @@ t_cmd	*cmd_parser(char **argv, t_info *info)
 			return (NULL);
 		tmp = cmd_lstnew(cmd_spltd, ++index);
 		if (!tmp)
-		{
-			cmd_lstclear(&start, &free);
-			return (NULL);
-		}
+			return (cmd_lstclear(&start, &free), NULL);
 		start = cmd_lstadd_back(&start, tmp);
 	}
 	if (set_cmd_infos(&start, info->path) == -2)			// protection of the malloc of cmd_path

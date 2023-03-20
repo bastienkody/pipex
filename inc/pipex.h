@@ -35,6 +35,11 @@
 # define READ_END 0
 # define WRITE_END 1
 
+/* custom err msg */
+# define NSFD "pipex: no such file or directory: "
+# define PDND "pipex: permission denied: "
+# define CNFD "pipex: command not found: "
+
 typedef	struct files
 {
 	char	*infile;
@@ -47,7 +52,6 @@ typedef	struct files
 	int		out_fd;
 	int		here_doc;
 	char	*limiter;
-	int		cmd_nb;
 }				t_files;
 
 typedef	struct s_cmd
@@ -69,6 +73,7 @@ typedef struct s_info
 	t_cmd	*cmd_start;
 	int		**pipefd;
 	int		cmd_nb;
+	pid_t	last_pid;
 	int		exit_code;
 }				t_info;
 

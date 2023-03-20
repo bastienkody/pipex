@@ -85,16 +85,3 @@ void	cmd_lstclear(t_cmd **start, void (*del)(void *))
 		*start = tmp;
 	}
 }
-
-int	cmd_lstsize(t_cmd *start)
-{
-	int	i;
-
-	i = 0;
-	while (start)
-	{
-		i++;
-		start = start->next;
-	}
-	return (i);
-}

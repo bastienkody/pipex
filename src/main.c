@@ -18,7 +18,7 @@ void	pipex(t_info *info, char **envp)
 	int		child_status;
 	pid_t	ret;
 
-	while (info->cmd) // might need to get **info + create a variable (cmd = *(info->cmd))
+	while (info->cmd)
 	{
 		pid = fork();
 		if (pid == -1)
@@ -39,12 +39,13 @@ void	pipex(t_info *info, char **envp)
 		}
 		info->cmd = info->cmd->next;
 	}
-	close(info->pipefd[info->cmd_nb - 2][READ_END]);	// still needed? i guess it might
-	ret = waitpid(-1, &child_status, 0)
+	close(info->pipefd[info->cmd_nb - 2][READ_END]);
+	ret = waitpid(-1, &child_status, 0);
 	while (ret != -1)
 	{
 		if (ret == info->last_pid)
 			info->exit_code = child_status;
+	ret = waitpid(-1, &child_status, 0);
 	}
 }
 
@@ -63,14 +64,14 @@ t_info	*init_info(int argc, char **argv, char **envp)
 		return (NULL);
 	}
 	info->cmd = cmd_parser(argv, info);
-	info->cmd_start = info->cmd;
-	info->cmd_nb = cmd_lstsize(info->cmd_start);
-	info->exit_code = 0;
 	if (!info->cmd)
 	{
 		close_n_free(info);
 		return (NULL);
 	}
+	info->cmd_start = info->cmd;
+	info->cmd_nb = cmd_lstsize(info->cmd_start);
+	info->exit_code = 0;
 	return (info);
 }
 

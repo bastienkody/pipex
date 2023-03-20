@@ -12,7 +12,6 @@
 
 #include "../inc/pipex.h"
 
-//void	execute(t_cmd *cmd, char **envp, t_files *files, int **pipefd)
 void	execute(t_info *info, char **envp)
 {
 	if (info->cmd->index == 0)
@@ -24,9 +23,9 @@ void	execute(t_info *info, char **envp)
 	if (info->cmd->exist)
 	{
 		if (!ft_strchr(info->cmd->cmd_name, '/'))
-			ft_fprintf(2, "pipex: command not found: %s\n", info->cmd->cmd_name);
+			ft_fprintf(2, "%s%s\n", CNFD, info->cmd->cmd_name);
 		else
-			ft_fprintf(2, "pipex: no such file or directory: %s\n", info->cmd->cmd_name);
+			ft_fprintf(2, "%s%s\n", NSFD, info->cmd->cmd_name);
 		close_n_free(info);
 		exit(EXIT_FAILURE);
 	}
@@ -37,6 +36,16 @@ void	execute(t_info *info, char **envp)
 	exit(EXIT_FAILURE);
 }
 
+void	dupper(int new_fd, int old_fd, t_info *info)
+{
+	if (dup2(new_fd, old_fd) == -1)
+	{
+		perror("pipex (dup2)");
+		close_n_free(info);
+		exit(EXIT_FAILURE);
+	}
+}
+
 void	dup_mid_cmd(t_info *info)
 {
 	if (info->files->in_fd > 0)
@@ -45,36 +54,25 @@ void	dup_mid_cmd(t_info *info)
 		close(info->pipefd[info->cmd->index - 2][READ_END]);
 	close(info->pipefd[info->cmd->index - 1][WRITE_END]);
 	close(info->pipefd[info->cmd->index][READ_END]);
-	if (dup2(info->pipefd[info->cmd->index - 1][READ_END], 0) == -1)
-		ft_fprintf(2, "dup error on pipe %i READ END before exec cmd %s\n", info->cmd->index - 1, info->cmd->cmd_name);
-	if (dup2(info->pipefd[info->cmd->index][WRITE_END], 1) == -1)
-		ft_fprintf(2, "dup error on pipe %i WRITE END before exec cmd %s\n", info->cmd->index, info->cmd->cmd_name);
+	dupper(info->pipefd[info->cmd->index - 1][READ_END], 0, info);
+	dupper(info->pipefd[info->cmd->index][WRITE_END], 1, info);
 }
 
 void	dup_first_cmd(t_info *info)
 {
 	close(info->pipefd[info->cmd->index][READ_END]);
-	if (dup2(info->pipefd[info->cmd->index][WRITE_END], 1) < 0)
-		ft_fprintf(2, "dup error on pipe %i WRITE END before exec first cmd %s\n", info->cmd->index, info->cmd->cmd_name);
-	if (!info->files->here_doc)
-	{
-		if (!info->files->in_exist && !info->files->in_is_readbl)
-			dup2(info->files->in_fd, 0);
-		else
-		{
-			close(info->pipefd[info->cmd->index][WRITE_END]);
-			if (info->files->in_exist)
-				ft_fprintf(2, "pipex: no such file or directory: %s\n", info->files->infile);
-			else if (info->files->in_is_readbl)
-				ft_fprintf(2, "pipex: permission denied: %s\n", info->files->infile);
-			exit(EXIT_FAILURE);
-		}
-	}
+	dupper(info->pipefd[info->cmd->index][WRITE_END], 1, info);
+	if (!info->files->in_exist && !info->files->in_is_readbl)
+		dupper(info->files->in_fd, 0, info);
 	else
 	{
-		//create pipe (+int fd[2])
-		//dup write end for here_doc_fct
-		//call here_doc with write end of pipe
+		close(info->pipefd[info->cmd->index][WRITE_END]);
+		if (info->files->in_exist)
+			ft_fprintf(2, "FIRSTCMD%s%s\n", NSFD, info->files->infile);
+		else if (info->files->in_is_readbl)
+			ft_fprintf(2, "FIRSTCMD%s%s\n", PDND, info->files->infile);
+		close_n_free(info);
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -83,14 +81,15 @@ void	dup_last_cmd(t_info *info)
 	close(info->pipefd[info->cmd->index - 1][WRITE_END]);
 	if (info->cmd->index >= 2)
 		close(info->pipefd[info->cmd->index - 2][READ_END]);
-	dup2(info->pipefd[info->cmd->index - 1][READ_END], 0);
+	dupper(info->pipefd[info->cmd->index - 1][READ_END], 0, info);
 	if (!info->files->out_is_writbl)
-		dup2(info->files->out_fd, 1);
+		dupper(info->files->out_fd, 1, info);
 	else
 	{
 		close(info->pipefd[info->cmd->index - 1][READ_END]);
-		ft_fprintf(2, "pipex: permission denied: %s\n", info->files->outfile);
+		ft_fprintf(2, "pipex LAST CMD: permission denied: %s\n", info->files->outfile);
 		info->exit_code = 1;
+		close_n_free(info);
 		exit(EXIT_FAILURE);
 	}
 }
