@@ -66,7 +66,7 @@ t_list	*path_to_llist(char **envp, t_info *info)
 	return (path);
 }
 
-/* search for cmd in the PATH */
+/* search for cmd in the PATH. cmd_path protected in below fct */
 void	path_finder(t_cmd *cmd, t_list *path)
 {
 	char	*tmp_path;
@@ -91,12 +91,12 @@ void	path_finder(t_cmd *cmd, t_list *path)
 		path = path->next;
 	}
 	free(tmp_name);
-	cmd->cmd_path = ft_strdup(cmd->cmd_name);			// malloc protected later (if !ptr->cmd_path)
+	cmd->cmd_path = ft_strdup(cmd->cmd_name);
 	cmd->exist = -1;
 	cmd->is_exec = -1;
 }
 
-/* set cmd path + existence + execution rights. If '/' no search in PATH */
+/* set cmd path + existence + execution rights. If '/' no search in PATH. */
 int	set_cmd_infos(t_cmd **start, t_list *path)
 {
 	t_cmd	*ptr;
@@ -108,11 +108,11 @@ int	set_cmd_infos(t_cmd **start, t_list *path)
 		{
 			ptr->is_exec = access(ptr->cmd_name, X_OK);
 			ptr->exist = access(ptr->cmd_name, F_OK);
-			ptr->cmd_path = ft_strdup(ptr->cmd_name);		// malloc protected later (if !ptr->cmd_path)
+			ptr->cmd_path = ft_strdup(ptr->cmd_name);
 		}
 		else
 			path_finder(ptr, path);
-		if (!ptr->cmd_path)									// malloc of cmd_path=strdup protected here 
+		if (!ptr->cmd_path)
 		{
 			cmd_lstclear(start, &free);
 			return (-2);
@@ -122,8 +122,7 @@ int	set_cmd_infos(t_cmd **start, t_list *path)
 	return (0);
 }
 
-/*	stores each cmd given into a t_cmd llist 
-	get infos about the cmd path*/
+/*	stores each cmd given into a t_cmd llist */
 t_cmd	*cmd_parser(char **argv, t_info *info)
 {
 	t_cmd	*start;
@@ -143,10 +142,10 @@ t_cmd	*cmd_parser(char **argv, t_info *info)
 			return (cmd_lstclear(&start, &free), NULL);
 		tmp = cmd_lstnew(cmd_spltd, ++index);
 		if (!tmp)
-			return (free_char_matrix(cmd_spltd), cmd_lstclear(&start, &free), NULL);
+			return (cmd_lstclear(&start, &free), NULL);
 		start = cmd_lstadd_back(&start, tmp);
 	}
-	if (set_cmd_infos(&start, info->path) == -2)			// protection of the malloc of cmd_path
+	if (set_cmd_infos(&start, info->path) == -2)
 		return (NULL);
 	return (start);
 }

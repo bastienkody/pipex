@@ -18,9 +18,11 @@ t_cmd	*cmd_lstnew(char **cmd_spltd, int index)
 {
 	t_cmd	*new;
 
-	new = malloc(1 * sizeof(t_cmd));
-	if (!new || !cmd_spltd)
+	if (!cmd_spltd)
 		return (NULL);
+	new = malloc(1 * sizeof(t_cmd));
+	if (!new)
+		return (free_char_matrix(cmd_spltd), NULL);
 	new->cmd_argv = cmd_spltd;
 	new->cmd_name = cmd_spltd[0];
 	new->index = index;

@@ -17,7 +17,7 @@ void	wait_cmds(t_info *info)
 	int		child_status;
 	pid_t	ret;
 
-	ret = waitpid(-1, &child_status, 0); //ret = 0;
+	ret = 0;
 	while (ret != -1)
 	{
 		if (ret == info->last_pid)
@@ -65,8 +65,8 @@ t_info	*init_info(int argc, char **argv, char **envp)
 	info->pipefd = NULL;
 	info->cmd_nb = 0;
 	info->cmd_start = NULL;
-	info->path = path_to_llist(envp, info);				// path can be null(unset $PATH) malloc error handled with exit_failure (avec free info just before)
-	info->files = file_parser(argc, argv);				// + opens can have failed
+	info->path = path_to_llist(envp, info);
+	info->files = file_parser(argc, argv);
 	if (!info->files)
 	{
 		close_n_free(info);
