@@ -68,16 +68,10 @@ t_info	*init_info(int argc, char **argv, char **envp)
 	info->path = path_to_llist(envp, info);
 	info->files = file_parser(argc, argv);
 	if (!info->files)
-	{
-		close_n_free(info);
-		return (NULL);
-	}
+		return (close_n_free(info), NULL);
 	info->cmd = cmd_parser(argv, info);
 	if (!info->cmd)
-	{
-		close_n_free(info);
-		return (NULL);
-	}
+		return (close_n_free(info), NULL);
 	info->cmd_start = info->cmd;
 	info->cmd_nb = cmd_lstsize(info->cmd_start);
 	info->exit_code = 0;

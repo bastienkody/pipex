@@ -44,8 +44,7 @@ void	launch_here_doc(t_files *files)
 	open (or create) out in >>
 	reset out infos
 	open inf
-	fulfill here_doc + make it inf
-*/
+	fulfill here_doc n close + make it inf n open */
 void	open_files(t_files *files)
 {
 	if (!files->here_doc && ((!files->out_e && !files->out_w) || files->out_e))
