@@ -12,11 +12,23 @@
 
 #include "../inc/pipex.h"
 
+void	wait_cmds(t_info *info)
+{
+	int		child_status;
+	pid_t	ret;
+
+	ret = waitpid(-1, &child_status, 0); //ret = 0;
+	while (ret != -1)
+	{
+		if (ret == info->last_pid)
+			info->exit_code = child_status;
+		ret = waitpid(-1, &child_status, 0);
+	}
+}
+
 void	pipex(t_info *info, char **envp)
 {
 	pid_t	pid;
-	int		child_status;
-	pid_t	ret;
 
 	while (info->cmd)
 	{
@@ -40,22 +52,19 @@ void	pipex(t_info *info, char **envp)
 		info->cmd = info->cmd->next;
 	}
 	close(info->pipefd[info->cmd_nb - 2][READ_END]);
-	ret = waitpid(-1, &child_status, 0);
-	while (ret != -1)
-	{
-		if (ret == info->last_pid)
-			info->exit_code = child_status;
-	ret = waitpid(-1, &child_status, 0);
-	}
+	wait_cmds(info);
 }
 
 t_info	*init_info(int argc, char **argv, char **envp)
 {
 	t_info	*info;
- 
+
 	info = malloc(1 * sizeof(t_info));
 	if (!info)
 		return (NULL);
+	info->pipefd = NULL;
+	info->cmd_nb = 0;
+	info->cmd_start = NULL;
 	info->path = path_to_llist(envp, info);				// path can be null(unset $PATH) malloc error handled with exit_failure (avec free info just before)
 	info->files = file_parser(argc, argv);				// + opens can have failed
 	if (!info->files)
@@ -81,15 +90,15 @@ int	main(int argc, char **argv, char **envp)
 	int		exit_code;
 
 	if (!arg_checker(argc, argv))
-		return (-1);
+		return (1);
 	info = init_info(argc, argv, envp);
 	if (!info)
-		return (-2);
+		return (1);
 	info->pipefd = get_pipefd(info);
 	if (!info->pipefd)
 	{
 		close_n_free(info);
-		return (-3);
+		return (1);
 	}
 	pipex(info, envp);
 	exit_code = analyze_ex_code(info->exit_code, info);

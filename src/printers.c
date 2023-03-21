@@ -27,21 +27,21 @@ void	print_files(t_files files)
 	ft_fprintf(1, "----------------\n|FILES|\n");
 	if (!files.here_doc)
 	{
-		ft_fprintf(1, "infile:%s\n", files.infile);
-		ft_fprintf(1, "infile exist:%i\n", files.in_exist);
-		ft_fprintf(1, "infile is readbl:%i\n", files.in_is_readbl);
-		ft_fprintf(1, "infile_fd:%i\n", files.in_fd);
+		ft_fprintf(1, "inf:%s\n", files.inf);
+		ft_fprintf(1, "inf exist:%i\n", files.in_e);
+		ft_fprintf(1, "inf is readbl:%i\n", files.in_r);
+		ft_fprintf(1, "inf_fd:%i\n", files.in_fd);
 	}
 	else
 	{
 		ft_fprintf(1, "here_doc?:%i\n", files.here_doc);
-		ft_fprintf(1, "limiter:%s\n", files.limiter);
-		ft_fprintf(1, "infile_fd:%i\n", files.in_fd);
+		ft_fprintf(1, "lim:%s\n", files.lim);
+		ft_fprintf(1, "inf_fd:%i\n", files.in_fd);
 	}
-	ft_fprintf(1, "outfile:%s\n", files.outfile);
-	ft_fprintf(1, "outfile exist:%i\n", files.out_exist);
-	ft_fprintf(1, "outfile is writbl:%i\n", files.out_is_writbl);
-	ft_fprintf(1, "outfile_fd:%i\n", files.out_fd);
+	ft_fprintf(1, "out:%s\n", files.out);
+	ft_fprintf(1, "out exist:%i\n", files.out_e);
+	ft_fprintf(1, "out is writbl:%i\n", files.out_w);
+	ft_fprintf(1, "out_fd:%i\n", files.out_fd);
 }
 
 void	print_cmd_list(t_cmd *start)

@@ -56,25 +56,17 @@ int	arg_checker(int argc, char **argv)
 
 int	analyze_ex_code(int status, t_info *info)
 {
-	if (info->files->out_is_writbl)
+	if (info->files->out_w)
 		return (1);
 	info->cmd = cmd_lstlast(info->cmd_start);
 	if (info->cmd->exist)
 		return (127);
-	if (!info->cmd->exist && status != 512)
-		return (0);
+	if (info->cmd->is_exec)
+		return (126);
 	if (WIFEXITED(status))
-	{
-		ft_fprintf(2, "WIFEXITED(status):%i\n", WIFEXITED(status));
-		ft_fprintf(2, "WEXITSTATUS(status):%i\n", WEXITSTATUS(status));
 		return (WEXITSTATUS(status));
-	}
 	if (WIFSIGNALED(status))
-	{
-		ft_fprintf(2, "WIFSIGNALED(status):%i\n", WIFSIGNALED(status));
-		ft_fprintf(2, "WTERMSIG(status):%i\n", WTERMSIG(status));
 		return (WTERMSIG(status));
-	}
 	return (status);
 }
 
@@ -93,14 +85,9 @@ int	**get_pipefd(t_info *info)
 		if (!pipefd[i] || pipe(pipefd[i]) == -1)
 		{
 			perror("pipex");
-			free_int_matrix(pipefd, i);
+			free_int_matrix(pipefd, i + 1);
 			return (NULL);
 		}
-		/*else
-		{
-			ft_fprintf(2, "pipe%i, read:%i\n", i, pipefd[i][0]);
-			ft_fprintf(2, "pipe%i, write:%i\n", i, pipefd[i][1]);
-		}*/
 		i++;
 	}
 	return (pipefd);
@@ -111,13 +98,7 @@ void	close_pipefd(int cmd_nb, int **pipefd)
 	int	i;
 
 	if (!cmd_nb || !pipefd)
-	{
-		if (!cmd_nb)
-			ft_fprintf(2, "cmd_nb = 0 --> no pipefd to close\n");
-		if (!pipefd)
-			ft_fprintf(2, "pipefd is NULL -> no pipefd to close\n");
 		return ;
-	}
 	i = 0;
 	while (i < cmd_nb - 1)
 	{

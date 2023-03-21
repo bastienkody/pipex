@@ -14,13 +14,13 @@
 # define PIPEX_H
 
 /* lib */
-#include "../libft/libft.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <fcntl.h>
+# include "../libft/libft.h"
+# include <stdlib.h>
+# include <stdio.h>
+# include <unistd.h>
+# include <sys/types.h>
+# include <sys/wait.h>
+# include <fcntl.h>
 
 /* colors */
 # define RED "\033[31m"
@@ -40,28 +40,28 @@
 # define PDND "pipex: permission denied: "
 # define CNFD "pipex: command not found: "
 
-typedef	struct files
+typedef struct files
 {
-	char	*infile;
-	int		in_exist;
-	int		in_is_readbl;
+	char	*inf;
+	int		in_e;
+	int		in_r;
 	int		in_fd;
-	char	*outfile;
- 	int		out_exist;
-	int		out_is_writbl;
+	char	*out;
+	int		out_e;
+	int		out_w;
 	int		out_fd;
 	int		here_doc;
-	char	*limiter;
+	char	*lim;
 }				t_files;
 
-typedef	struct s_cmd
+typedef struct s_cmd
 {
-	int				index;		// 0 = first cmd							STACK
-	char			*cmd_name;	// name (ls)								HEAP (freed via cmd_argv)
-	char			*cmd_path;	// full path (/ur/bin/ls)					HEAP
-	char			**cmd_argv;	// options + arg avec cmd_name en argv[0]	HEAP
-	int				exist;		// F_OK										STACK
-	int				is_exec;	// X_OK										STACK
+	int				index;
+	char			*cmd_name;
+	char			*cmd_path;
+	char			**cmd_argv;
+	int				exist;
+	int				is_exec;
 	struct s_cmd	*next;
 }					t_cmd;
 

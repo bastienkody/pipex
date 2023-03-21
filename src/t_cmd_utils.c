@@ -18,13 +18,8 @@ t_cmd	*cmd_lstnew(char **cmd_spltd, int index)
 {
 	t_cmd	*new;
 
-	if (!cmd_spltd)
-	{
-		ft_fprintf(1, "Cmd_splitted is null in cmdlst_new. Returning null\n");
-		return (NULL);
-	}
 	new = malloc(1 * sizeof(t_cmd));
-	if (!new)
+	if (!new || !cmd_spltd)
 		return (NULL);
 	new->cmd_argv = cmd_spltd;
 	new->cmd_name = cmd_spltd[0];

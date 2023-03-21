@@ -33,6 +33,7 @@ void	execute(t_info *info, char **envp)
 	close_files(info->files);
 	execve(info->cmd->cmd_path, info->cmd->cmd_argv, envp);
 	perror("pipex (execve)");
+	close_n_free(info);
 	exit(EXIT_FAILURE);
 }
 
@@ -62,15 +63,15 @@ void	dup_first_cmd(t_info *info)
 {
 	close(info->pipefd[info->cmd->index][READ_END]);
 	dupper(info->pipefd[info->cmd->index][WRITE_END], 1, info);
-	if (!info->files->in_exist && !info->files->in_is_readbl)
+	if (!info->files->in_e && !info->files->in_r)
 		dupper(info->files->in_fd, 0, info);
 	else
 	{
 		close(info->pipefd[info->cmd->index][WRITE_END]);
-		if (info->files->in_exist)
-			ft_fprintf(2, "FIRSTCMD%s%s\n", NSFD, info->files->infile);
-		else if (info->files->in_is_readbl)
-			ft_fprintf(2, "FIRSTCMD%s%s\n", PDND, info->files->infile);
+		if (info->files->in_e)
+			ft_fprintf(2, "%s%s\n", NSFD, info->files->inf);
+		else if (info->files->in_r)
+			ft_fprintf(2, "%s%s\n", PDND, info->files->inf);
 		close_n_free(info);
 		exit(EXIT_FAILURE);
 	}
@@ -82,12 +83,12 @@ void	dup_last_cmd(t_info *info)
 	if (info->cmd->index >= 2)
 		close(info->pipefd[info->cmd->index - 2][READ_END]);
 	dupper(info->pipefd[info->cmd->index - 1][READ_END], 0, info);
-	if (!info->files->out_is_writbl)
+	if (!info->files->out_w)
 		dupper(info->files->out_fd, 1, info);
 	else
 	{
 		close(info->pipefd[info->cmd->index - 1][READ_END]);
-		ft_fprintf(2, "pipex LAST CMD: permission denied: %s\n", info->files->outfile);
+		ft_fprintf(2, "pipex: permission denied: %s\n", info->files->out);
 		info->exit_code = 1;
 		close_n_free(info);
 		exit(EXIT_FAILURE);
