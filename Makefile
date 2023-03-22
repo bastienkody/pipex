@@ -2,14 +2,16 @@ HEADER = ./inc/pipex.h
 
 SRC_DIR = ./src/
 
-SRCS =	${SRC_DIR}main.c\
-		${SRC_DIR}parsing.c\
-		${SRC_DIR}files.c\
-		${SRC_DIR}printers.c\
-		${SRC_DIR}t_cmd_utils.c\
-		${SRC_DIR}execution.c\
-		${SRC_DIR}aux.c\
-		${SRC_DIR}aux2.c
+SRCS_NAME =	main.c\
+		parsing.c\
+		files.c\
+		printers.c\
+		t_cmd_utils.c\
+		execution.c\
+		aux.c\
+		aux2.c
+
+SRCS = $(addprefix ${SRC_DIR}, ${SRCS_NAME})
 
 OBJS =	${SRCS:.c=.o}
 
@@ -21,7 +23,7 @@ CC =	cc
 
 CFLAGSDEV =	-Wall -Wextra -Werror -g3
 
-CFLAGS =	-Wall -Wextra -Werror
+CFLAGS =	-Wall -Wextra -Werror -g3
 
 LDFLAGS =	-L./libft -lft
 
