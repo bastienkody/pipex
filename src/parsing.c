@@ -104,6 +104,9 @@ int	set_cmd_infos(t_cmd **start, t_list *path)
 	ptr = *start;
 	while (ptr)
 	{
+		ptr->cmd_path = NULL;
+		if (!ptr->cmd_name)
+			ptr->cmd_name = " ";
 		if (ft_strchr(ptr->cmd_name, '/'))
 		{
 			ptr->is_exec = access(ptr->cmd_name, X_OK);

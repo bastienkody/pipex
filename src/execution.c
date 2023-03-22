@@ -49,10 +49,6 @@ void	dupper(int new_fd, int old_fd, t_info *info)
 
 void	dup_mid_cmd(t_info *info)
 {
-	if (info->files->in_fd > 0)
-		close(info->files->in_fd);
-	if (info->cmd->index >= 2)
-		close(info->pipefd[info->cmd->index - 2][READ_END]);
 	close(info->pipefd[info->cmd->index - 1][WRITE_END]);
 	close(info->pipefd[info->cmd->index][READ_END]);
 	dupper(info->pipefd[info->cmd->index - 1][READ_END], 0, info);
@@ -79,9 +75,6 @@ void	dup_first_cmd(t_info *info)
 
 void	dup_last_cmd(t_info *info)
 {
-	close(info->pipefd[info->cmd->index - 1][WRITE_END]);
-	if (info->cmd->index >= 2)
-		close(info->pipefd[info->cmd->index - 2][READ_END]);
 	dupper(info->pipefd[info->cmd->index - 1][READ_END], 0, info);
 	if (!info->files->out_w)
 		dupper(info->files->out_fd, 1, info);

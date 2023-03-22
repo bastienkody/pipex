@@ -26,6 +26,29 @@ void	wait_cmds(t_info *info)
 	}
 }
 
+t_info	*init_info(int argc, char **argv, char **envp)
+{
+	t_info	*info;
+
+	info = malloc(1 * sizeof(t_info));
+	if (!info)
+		return (NULL);
+	info->pipefd = NULL;
+	info->cmd_nb = 0;
+	info->cmd_start = NULL;
+	info->path = path_to_llist(envp, info);
+	info->files = file_parser(argc, argv);
+	if (!info->files)
+		return (close_n_free(info), NULL);
+	info->cmd = cmd_parser(argv, info);
+	if (!info->cmd)
+		return (close_n_free(info), NULL);
+	info->cmd_start = info->cmd;
+	info->cmd_nb = cmd_lstsize(info->cmd_start);
+	info->exit_code = 0;
+	return (info);
+}
+
 void	pipex(t_info *info, char **envp)
 {
 	pid_t	pid;
@@ -55,44 +78,21 @@ void	pipex(t_info *info, char **envp)
 	wait_cmds(info);
 }
 
-t_info	*init_info(int argc, char **argv, char **envp)
-{
-	t_info	*info;
-
-	info = malloc(1 * sizeof(t_info));
-	if (!info)
-		return (NULL);
-	info->pipefd = NULL;
-	info->cmd_nb = 0;
-	info->cmd_start = NULL;
-	info->path = path_to_llist(envp, info);
-	info->files = file_parser(argc, argv);
-	if (!info->files)
-		return (close_n_free(info), NULL);
-	info->cmd = cmd_parser(argv, info);
-	if (!info->cmd)
-		return (close_n_free(info), NULL);
-	info->cmd_start = info->cmd;
-	info->cmd_nb = cmd_lstsize(info->cmd_start);
-	info->exit_code = 0;
-	return (info);
-}
-
 int	main(int argc, char **argv, char **envp)
 {
 	t_info	*info;
 	int		exit_code;
 
 	if (!arg_checker(argc, argv))
-		return (1);
+		return (3);
 	info = init_info(argc, argv, envp);
 	if (!info)
-		return (1);
+		return (45);
 	info->pipefd = get_pipefd(info);
 	if (!info->pipefd)
 	{
 		close_n_free(info);
-		return (1);
+		return (3);
 	}
 	pipex(info, envp);
 	exit_code = analyze_ex_code(info->exit_code, info);

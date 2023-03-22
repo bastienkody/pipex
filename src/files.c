@@ -47,6 +47,8 @@ void	launch_here_doc(t_files *files)
 	fulfill here_doc n close + make it inf n open */
 void	open_files(t_files *files)
 {
+	files->out_fd = -1;
+	files->in_fd = -1;
 	if (!files->here_doc && ((!files->out_e && !files->out_w) || files->out_e))
 		files->out_fd = open(files->out, O_TRUNC | O_WRONLY | O_CREAT, 00644);
 	if (files->here_doc && ((!files->out_e && !files->out_w) || files->out_e))
