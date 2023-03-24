@@ -74,7 +74,7 @@ t_files	*file_parser(int argc, char **argv)
 	files = malloc(1 * sizeof(t_files));
 	if (!files)
 		return (NULL);
-	if (!ft_strncmp(argv[1], "here_doc", ft_strlen("here_doc")))
+	if (!ft_strncmp(argv[1], "here_doc", ft_strlen(argv[1])))
 	{
 		files->inf = NULL;
 		files->here_doc = 1;
