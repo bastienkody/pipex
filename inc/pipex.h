@@ -111,8 +111,5 @@ void	close_pipefd(int cmd_nb, int **pipefd);
 
 /* execution */
 void	execute(t_info *info, char **envp);
-void	dup_first_cmd(t_info *info);
-void	dup_mid_cmd(t_info *info);
-void	dup_last_cmd(t_info *info);
 
 #endif

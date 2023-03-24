@@ -23,7 +23,7 @@ CC =	cc
 
 CFLAGSDEV =	-Wall -Wextra -Werror -g3
 
-CFLAGS =	-Wall -Wextra -Werror -g3
+CFLAGS =	-Wall -Wextra -Werror
 
 LDFLAGS =	-L./libft -lft
 

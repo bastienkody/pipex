@@ -87,12 +87,12 @@ int	main(int argc, char **argv, char **envp)
 		return (3);
 	info = init_info(argc, argv, envp);
 	if (!info)
-		return (45);
+		return (4);
 	info->pipefd = get_pipefd(info);
 	if (!info->pipefd)
 	{
 		close_n_free(info);
-		return (3);
+		return (4);
 	}
 	pipex(info, envp);
 	exit_code = analyze_ex_code(info->exit_code, info);

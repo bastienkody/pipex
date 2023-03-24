@@ -12,31 +12,6 @@
 
 #include "../inc/pipex.h"
 
-void	execute(t_info *info, char **envp)
-{
-	if (info->cmd->index == 0)
-		dup_first_cmd(info);
-	else if (info->cmd->next)
-		dup_mid_cmd(info);
-	else
-		dup_last_cmd(info);
-	if (info->cmd->exist)
-	{
-		if (!ft_strchr(info->cmd->cmd_name, '/'))
-			ft_fprintf(2, "%s%s\n", CNFD, info->cmd->cmd_name);
-		else
-			ft_fprintf(2, "%s%s\n", NSFD, info->cmd->cmd_name);
-		close_n_free(info);
-		exit(EXIT_FAILURE);
-	}
-	close_pipefd(info->cmd_nb, info->pipefd);
-	close_files(info->files);
-	execve(info->cmd->cmd_path, info->cmd->cmd_argv, envp);
-	perror("pipex (execve)");
-	close_n_free(info);
-	exit(EXIT_FAILURE);
-}
-
 void	dupper(int new_fd, int old_fd, t_info *info)
 {
 	if (dup2(new_fd, old_fd) == -1)
@@ -81,9 +56,34 @@ void	dup_last_cmd(t_info *info)
 	else
 	{
 		close(info->pipefd[info->cmd->index - 1][READ_END]);
-		ft_fprintf(2, "pipex: permission denied: %s\n", info->files->out);
+		ft_fprintf(2, "%s%s\n", PDND, info->files->out);
 		info->exit_code = 1;
 		close_n_free(info);
 		exit(EXIT_FAILURE);
 	}
+}
+
+void	execute(t_info *info, char **envp)
+{
+	if (info->cmd->index == 0)
+		dup_first_cmd(info);
+	else if (info->cmd->next)
+		dup_mid_cmd(info);
+	else
+		dup_last_cmd(info);
+	if (info->cmd->exist)
+	{
+		if (!ft_strchr(info->cmd->cmd_name, '/'))
+			ft_fprintf(2, "%s%s\n", CNFD, info->cmd->cmd_name);
+		else
+			ft_fprintf(2, "%s%s\n", NSFD, info->cmd->cmd_name);
+		close_n_free(info);
+		exit(EXIT_FAILURE);
+	}
+	close_pipefd(info->cmd_nb, info->pipefd);
+	close_files(info->files);
+	execve(info->cmd->cmd_path, info->cmd->cmd_argv, envp);
+	perror("pipex (execve)");
+	close_n_free(info);
+	exit(EXIT_FAILURE);
 }
