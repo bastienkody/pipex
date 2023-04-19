@@ -25,6 +25,7 @@ t_cmd	*cmd_lstnew(char **cmd_spltd, int index)
 		return (free_char_matrix(cmd_spltd), NULL);
 	new->cmd_argv = cmd_spltd;
 	new->cmd_name = cmd_spltd[0];
+	new->cmd_path = NULL;
 	new->index = index;
 	new->next = NULL;
 	return (new);
@@ -65,7 +66,8 @@ void	cmd_lstdelone(t_cmd *cmd, void (*del)(void *))
 	if (!del || !cmd)
 		return ;
 	free_char_matrix(cmd->cmd_argv);
-	(*del)(cmd->cmd_path);
+	if (cmd->cmd_path)
+		(*del)(cmd->cmd_path);
 	free(cmd);
 }
 
