@@ -324,17 +324,17 @@ rm -f outf stderr.txt
 # unset $PATH (with absolute cmd)
 echo "${ITA}Tests with unset \$PATH:${END}"
 tmp_PATH=$PATH
-#unset PATH
 
-echo -n "Test 1 : env -i ./pipex Makefile cat ls outf \t\t\t--> "
-#unset PATH ./pipex Makefile cat "echo yo" outf 2> stderr.txt
-PATH=tmp_PATH
+echo -n "Test 1 : unset PATH && ./pipex Makefile cat ls outf \t\t\t--> "
+unset PATH
+./pipex Makefile ls cat outf 2> stderr.txt
 code=$(echo $?)
-cat outf | grep -q yo && {echo -n "${GREEN}OK - WOW t'es chaud, explique moi stp!${END}" && [[ $code -eq 0 ]] && echo " ${GREEN}(return status == 0)${END}" || echo " ${YEL}(return status != 0)${END}"}
+PATH=$tmp_PATH && export PATH
 [[ $(cat stderr.txt | grep -ic "command not found") -eq 2 ]] && echo -n "${GREEN}OK${END}"
+[[ $(cat stderr.txt | wc -l) -ne 2 ]] && echo -n "$ ${YEL}(- not two lines written stderr)${END}"
 [[ $code -eq 127 ]] && echo " ${GREEN}(+ return status == 127 ok)${END}" || echo " ${YEL}(- return status != 127 ko)${END}"
 rm -f outf stderr.txt
-
+## CHECK HEREEEEEE
 
 echo -n "Test 2 : env -i ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf \t\t--> "
 #unset PATH ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf 2> stderr.txt
