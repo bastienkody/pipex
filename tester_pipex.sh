@@ -4,6 +4,8 @@
 uname -s | grep -qi darwin && os=mac && bin_path=/bin
 uname -s | grep -qi linux && os=linux && bin_path=/usr/bin
 
+alias vlgppx='/usr/bin/valgrind --trace-children=yes --leak-check=full --track-fds=yes'
+
 # print intro
 echo "------------------------------------"
 echo "------------------------------------"
@@ -314,7 +316,7 @@ cat outf | grep -q yo && {echo -n "${GREEN}OK - WOW t'es chaud, explique moi stp
 [[ $code -eq 127 ]] && echo " ${GREEN}(+ return status == 127 ok)${END}" || echo " ${YEL}(- return status != 127 ko)${END}"
 rm -f outf stderr.txt
 
-echo -n "Test 2 : env -i ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf \t\t--> "
+echo -n "Test 2 : env -i ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf\t--> "
 env -i ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf 2> stderr.txt
 code=$(echo $?)
 diff Makefile outf 2>/dev/null && echo -n "${GREEN}OK${END}" || echo "${RED}KO${END}"
@@ -322,27 +324,59 @@ diff Makefile outf 2>/dev/null && echo -n "${GREEN}OK${END}" || echo "${RED}KO${
 rm -f outf stderr.txt
 
 # unset $PATH (with absolute cmd)
-# NO CHECK YET
-#echo "${ITA}Tests with unset \$PATH:${END}"
-#tmp_PATH=$PATH
+echo "${ITA}Tests with unset \$PATH:${END}"
+tmp_PATH=$PATH
 
-#echo -n "Test 1 : unset PATH && ./pipex Makefile cat ls outf \t\t\t--> "
-#unset PATH
-#./pipex Makefile ls cat outf 2> stderr.txt
-#code=$(echo $?)
-#PATH=$tmp_PATH && export PATH
-#[[ $(cat stderr.txt | grep -ic "command not found") -eq 2 ]] && echo -n "${GREEN}OK${END}"
-#[[ $(cat stderr.txt | wc -l) -ne 2 ]] && echo -n "$ ${YEL}(- not two lines written stderr)${END}"
-#[[ $code -eq 127 ]] && echo " ${GREEN}(+ return status == 127 ok)${END}" || echo " ${YEL}(- return status != 127 ko)${END}"
-#rm -f outf stderr.txt
-
-
-echo -n "Test 2 : env -i ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf \t\t--> "
-#unset PATH ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf 2> stderr.txt
+echo -n "Test 1 : unset PATH && ./pipex Makefile cat ls outf \t\t\t--> "
+unset PATH
+./pipex Makefile ls cat outf 2> stderr.txt
 code=$(echo $?)
+PATH=$tmp_PATH && export PATH
+[[ $(cat stderr.txt | grep -ic "command not found") -eq 2 ]] && echo -n "${GREEN}OK${END}"
+[[ $(cat stderr.txt | wc -l) -ne 2 ]] && echo -n "$ ${YEL}(- not two lines written to stderr)${END}"
+[[ $code -eq 127 ]] && echo " ${GREEN}(+ return status == 127 ok)${END}" || echo " ${YEL}(- return status != 127 ko)${END}"
+rm -f outf stderr.txt
+
+echo -n "Test 2 : unset PATH && ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf \t--> "
+unset PATH
+./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf 2> stderr.txt
+code=$(echo $?)
+PATH=$tmp_PATH && export PATH
 diff Makefile outf 2>/dev/null && echo -n "${GREEN}OK${END}" || echo "${RED}KO${END}"
 [[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
 rm -f outf stderr.txt
 
-# / command
-# ajouter check code partout
+# valgrind
+echo "${ITA}Tests with valgrind:${END}"
+
+echo -n "Test 1 : vlgppx ./pipex Makefile cat cat outf \t\t\t--> "
+vlgppx ./pipex Makefile cat cat outf 2> vlg.txt
+
+first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
+second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
+main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
+[[ $first_proc -eq 0 ]] && echo -n "${GREEN}no leak first proc${END}" || echo -n "${RED}$first_proc leaks first proc${END}"
+[[ $second_proc -eq 0 ]] && echo -n "${GREEN} - no leak second proc${END}" || echo -n "${RED} - $second_proc leaks second proc${END}"
+[[ $main_proc -eq 0 ]] && echo "${GREEN} - no leak main proc${END}" || echo "${RED} - $main_proc leaks main proc${END}"
+rm -f outf vlg.txt
+
+echo -n "Test 2 : vlgppx ./pipex Makefile yes head outf \t\t\t--> "
+vlgppx ./pipex Makefile yes head outf 2> vlg.txt
+
+first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+echo -n "${GREEN}$first_proc leaks first proc (it's ok)${END}"
+[[ $second_proc -eq 0 ]] && echo -n "${GREEN} - no leak second proc${END}" || echo -n "${RED} - $second_proc leaks second proc${END}"
+[[ $main_proc -eq 0 ]] && echo "${GREEN} - no leak main proc${END}" || echo "${RED} - $main_proc leaks main proc${END}"
+rm -f outf vlg.txt
+
+# bonus
+	# multi comd
+	# here doc + append
+# valgrind
+	# leaks
+	# segfault
+	# opened fd
+
+make fclean >/dev/null 2>&1
