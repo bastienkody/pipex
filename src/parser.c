@@ -50,7 +50,7 @@ char	*space_to_minus(char *str)
 		else if (in_quote && str[i] == 39)
 			in_quote = 0;
 		else if (!in_quote && str[i] == 92 && str [i + 1] == ' ')
-			i++;
+			i++; // supp backslash + skipp <space> PB HERE + voir gestion du \\ dans dequote single
 		else if (!in_quote && str[i] == ' ')
 			str[i] = -1;
 	}
