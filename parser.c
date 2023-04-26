@@ -14,12 +14,33 @@ int	counter(char *str, char c)
 	return (i);
 }
 
+char *space_to_minus(char *str)
+{
+	int		in_quote;
+	char	space;
+	char	quote;
+
+	in_quote = 0;
+	space = 32;
+	quote = 39;
+	while(*str)
+	{
+		if (!in_quote && *str == quote)
+			in_quote = 1;
+		else if (in_quote && *str == quote)
+			in_quote = 0;
+		else if (!in_quote && *str == space)
+			*str = -1;
+		str++;
+	}
+	return (str);
+}
+
 /*
- - si pas un '								--> on copie
- - si un ' et nb > 1						--> on decremente 
- - si un c et nb == 1 et nb initial impair  --> on copie le dernier '
+ - si pas un '					--> on copie
+ - si un ' 						--> on decremente 
 */
-char	*dequote_single(char *str, int nb, int is_odd)
+char	*dequote_single(char *str)
 {
 	int			i;
 	int			j;
@@ -33,16 +54,17 @@ char	*dequote_single(char *str, int nb, int is_odd)
 	{
 		if (str[i] != c)
 			new[++j] = str[i];
-		else if (nb > 1)
-			nb--;
-		else if (is_odd)
-			new[++j] = str[i];
-
 	}
 	new[++j] = '\0';
 	return (new);
 }
 
+/* 
+	- quit if odd number of single quotes
+	- replace <space> not between single quote by char -1
+	- supress single quotes
+	- ft_split on -1 later (parsing.c)
+*/
 int	main(int argc, char **argv)
 {
 	int	i;
@@ -55,8 +77,11 @@ int	main(int argc, char **argv)
 		{
 			count = counter(argv[i], 39);
 			printf("%s : %i\n", argv[i], count);
-			if (count > 1)
-				argv[i] = dequote_single(argv[i], count, count % 2);
+			if (count & 1)
+				printf("Single quote error : odd number && EXIT_FAILURE\n");
+			space_to_minus(argv[1]);
+			if (count)
+				argv[i] = dequote_single(argv[i]);
 			printf("%s : %i (post)\n", argv[i], counter(argv[i], 39));
 			i++;
 		}
