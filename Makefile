@@ -4,6 +4,7 @@ SRC_DIR = ./src/
 
 SRCS_NAME =	main.c\
 		parsing.c\
+		parser.c\
 		files.c\
 		printers.c\
 		t_cmd_utils.c\

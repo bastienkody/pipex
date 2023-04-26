@@ -97,9 +97,12 @@ t_cmd	*cmd_lstadd_back(t_cmd **start, t_cmd *new);
 void	cmd_lstclear(t_cmd **start, void (*del)(void *));
 int		cmd_lstsize(t_cmd *start);
 
-/* parsing */
+/* cmd parsing */
 t_list	*path_to_llist(char **envp, t_info *info);
 t_cmd	*cmd_parser(char **argv, t_info *info);
+
+/* quotes spaces parsing*/
+char	**quote_space_parser(int argc, char **argv);
 
 /* files */
 t_files	*file_parser(int argc, char **argv);

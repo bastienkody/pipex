@@ -85,6 +85,7 @@ int	main(int argc, char **argv, char **envp)
 
 	if (!arg_checker(argc, argv))
 		return (3);
+	argv = quote_space_parser(argc, argv);
 	info = init_info(argc, argv, envp);
 	if (!info)
 		return (4);
@@ -94,6 +95,7 @@ int	main(int argc, char **argv, char **envp)
 		close_n_free(info);
 		return (4);
 	}
+	//print_cmd_list(info->cmd);
 	pipex(info, envp);
 	exit_code = analyze_ex_code(info->exit_code, info);
 	close_n_free(info);

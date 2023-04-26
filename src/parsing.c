@@ -140,7 +140,7 @@ t_cmd	*cmd_parser(char **argv, t_info *info)
 	index = -1;
 	while (*(argv + 2))
 	{
-		cmd_spltd = ft_split(*(++argv), ' ');
+		cmd_spltd = ft_split(*(++argv), -1);
 		if (!cmd_spltd)
 			return (cmd_lstclear(&start, &free), NULL);
 		tmp = cmd_lstnew(cmd_spltd, ++index);

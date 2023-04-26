@@ -200,7 +200,7 @@ code=$(echo $?)
 rm stderr.txt
 
 echo -n "Test 3 : ./pipex infile_no_r lsop echo yo t2_output\t\t--> "
-./pipex infile_no_r lsop "echo yo" t2_output 2> stderr.txt
+./pipex infile_no_r "lsop" "echo yo" t2_output 2> stderr.txt
 code=$(echo $?)
 [[ $(cat t2_output) == "yo" ]] && {echo -n "${GREEN}OK${END}" ; rm t2_* } || echo -n "${RED}KO${END}"
 [[ $(cat stderr.txt | grep -i "permission denied") ]] && echo -n " ${GREEN} (+ err msg ok)${END}" || echo -n " ${YEL} (- err msg without \"Permission denied\")${END}"
@@ -226,7 +226,7 @@ code=$(echo $?)
 rm -f stderr.txt
 
 echo -n "Test 3 : ./pipex Makefile touch OUI lsop outfile_no_w \t\t--> "
-./pipex Makefile "touch OUI" lsop outfile_no_w 2> stderr.txt
+./pipex Makefile "touch OUI" "lsop" outfile_no_w 2> stderr.txt
 code=$(echo $?)
 [[ $(ls -l | grep "OUI") ]] && {echo -n "${GREEN}OK${END}" ; rm -f OUI } || echo -n "${RED}KO${END}"
 [[ $(cat stderr.txt | grep -i "permission denied") ]] && echo -n "${GREEN} (+ err msg ok)${END}" || echo "${YEL} (- err msg without \"Permission denied\")${END}"
@@ -237,7 +237,7 @@ rm -f stderr.txt outfile*
 echo "${ITA}Tests silmutaneous cmd:${END}"
 
 echo -n "Test 1 : ./pipex Makefile yes "echo yo" outf \t\t\t--> "
-./pipex Makefile yes "echo yo" outf
+./pipex Makefile "yes" "echo yo" outf
 code=$(echo $?)
 [[ $(cat outf) -eq "yo" ]] && {echo -n "${GREEN}OK${END}" ; rm -f outf} || echo -n "${RED}KO${END}"
 [[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
@@ -266,7 +266,7 @@ echo "${ITA}Tests with a exec:${END}"
 echo "#include <stdio.h>\nint main(void){printf(\"yo\");}" > main.c && gcc main.c && gcc -o ls main.c && rm main.c
 
 echo -n "Test 1 : ./pipex Makefile ./a.out cat outf \t\t\t--> "
-./pipex Makefile ./a.out cat outf 2> stderr.txt
+./pipex Makefile "./a.out" "cat" outf 2> stderr.txt
 code=$(echo $?)
 [[ $(cat outf) == "yo" ]] && {echo -n "${GREEN}OK${END}" ; rm -f outf} || echo "${RED}KO${END}"
 [[ -s stderr.txt ]] && echo -n "${RED} KO : you wrote on stderr${END}"
@@ -274,7 +274,7 @@ code=$(echo $?)
 rm -f stderr.txt
 
 echo -n "\nTest 2 : ./pipex Makefile ls ./ls outf \t\t\t\t--> "
-./pipex Makefile ls ./ls outf 2> stderr.txt
+./pipex Makefile "ls" "./ls" outf 2> stderr.txt
 code=$(echo $?)
 [[ $(cat outf) == "yo" ]] && {echo -n "${GREEN}OK${END}" ; rm -f outf} || echo "${RED}KO${END}"
 [[ -s stderr.txt ]] && echo -n "${RED} KO : you wrote on stderr${END}"
@@ -283,7 +283,7 @@ rm -f stderr.txt ls
 
 echo -n "\nTest 3 : ./pipex Makefile ls ./a.out (chmod u-x) outf \t\t--> "
 chmod u-x a.out
-./pipex Makefile ls ./a.out outf 2> stderr.txt
+./pipex Makefile "ls" "./a.out" outf 2> stderr.txt
 code=$(echo $?)
 [[ $code -eq 126 ]] && $(cat stderr.txt | grep -qi "permission denied") && {echo "${GREEN}OK (code 126 + permission denied)${END}" ; rm -f outf}
 [[ $code -ne 126 ]] && echo -n "${YEL}KO (code != 126)${END}"
@@ -295,13 +295,13 @@ echo "${ITA}Tests outfile created before exec:${END}"
 
 echo -n "Test 1 : ./pipex Makefile cat ls outf \t\t\t\t--> "
 rm -f outf
-./pipex Makefile cat ls outf 2>/dev/null
+./pipex Makefile "cat" "ls" outf 2>/dev/null
 cat outf | grep -q "outf" && echo "${GREEN}OK${END}" || echo "${RED}KO (missing "outf" in ls result)${END}"
 rm -f outf
 
 echo -n "Test 2 : ./pipex Makefile ls cat outf \t\t\t\t--> "
 rm -f outf
-./pipex Makefile ls cat outf 2>/dev/null
+./pipex Makefile "ls" "cat" outf 2>/dev/null
 cat outf | grep -q "outf" && echo "${GREEN}OK${END}" || echo "${RED}KO (missing "outf" in ls result)${END}"
 rm -f outf
 
@@ -309,7 +309,7 @@ rm -f outf
 echo "${ITA}Tests with env -i:${END}"
 
 echo -n "Test 1 : env -i ./pipex Makefile cat ls outf \t\t\t--> "
-env -i ./pipex Makefile cat "echo yo" outf 2> stderr.txt
+env -i ./pipex Makefile "cat" "echo yo" outf 2> stderr.txt
 code=$(echo $?)
 cat outf | grep -q yo && {echo -n "${GREEN}OK - WOW t'es chaud, explique moi stp!${END}" && [[ $code -eq 0 ]] && echo " ${GREEN}(return status == 0)${END}" || echo " ${YEL}(return status != 0)${END}"}
 [[ $(cat stderr.txt | grep -ic "command not found") -eq 2 ]] && echo -n "${GREEN}OK${END}"
@@ -317,7 +317,7 @@ cat outf | grep -q yo && {echo -n "${GREEN}OK - WOW t'es chaud, explique moi stp
 rm -f outf stderr.txt
 
 echo -n "Test 2 : env -i ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf\t--> "
-env -i ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf 2> stderr.txt
+env -i ./pipex Makefile "${bin_path}/cat" "${bin_path}/cat" outf 2> stderr.txt
 code=$(echo $?)
 diff Makefile outf 2>/dev/null && echo -n "${GREEN}OK${END}" || echo "${RED}KO${END}"
 [[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
@@ -329,7 +329,7 @@ tmp_PATH=$PATH
 
 echo -n "Test 1 : unset PATH && ./pipex Makefile cat ls outf \t\t\t--> "
 unset PATH
-./pipex Makefile ls cat outf 2> stderr.txt
+./pipex Makefile "ls" "cat" outf 2> stderr.txt
 code=$(echo $?)
 PATH=$tmp_PATH && export PATH
 [[ $(cat stderr.txt | grep -ic "command not found") -eq 2 ]] && echo -n "${GREEN}OK${END}"
@@ -339,7 +339,7 @@ rm -f outf stderr.txt
 
 echo -n "Test 2 : unset PATH && ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf \t--> "
 unset PATH
-./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf 2> stderr.txt
+./pipex Makefile "${bin_path}/cat" "${bin_path}/cat" outf 2> stderr.txt
 code=$(echo $?)
 PATH=$tmp_PATH && export PATH
 diff Makefile outf 2>/dev/null && echo -n "${GREEN}OK${END}" || echo "${RED}KO${END}"
@@ -350,7 +350,7 @@ rm -f outf stderr.txt
 echo "${ITA}Tests with valgrind:${END}"
 
 echo -n "Test 1 : vlgppx ./pipex Makefile cat cat outf \t\t\t--> "
-vlgppx ./pipex Makefile cat cat outf 2> vlg.txt
+vlgppx ./pipex Makefile "cat" "cat" outf 2> vlg.txt
 
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
@@ -361,7 +361,7 @@ main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-
 rm -f outf vlg.txt
 
 echo -n "Test 2 : vlgppx ./pipex Makefile yes head outf \t\t\t--> "
-vlgppx ./pipex Makefile yes head outf 2> vlg.txt
+vlgppx ./pipex Makefile "yes" "head" outf 2> vlg.txt
 
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
@@ -371,6 +371,84 @@ echo -n "${GREEN}$first_proc leaks first proc (it's ok)${END}"
 [[ $main_proc -eq 0 ]] && echo "${GREEN} - no leak main proc${END}" || echo "${RED} - $main_proc leaks main proc${END}"
 rm -f outf vlg.txt
 
+# quotes
+echo "${ITA}Tests single quotes parsing:${END}"
+
+echo -n "Test 1 : ./pipex Makefile \"echo yo\" \"echo 'a' 'b' 'c'\" outf \t--> "
+./pipex Makefile "echo yo" "echo 'a' 'b' 'c'" outf 2>/dev/null
+code=$(echo $?)
+echo 'a' 'b' 'c' > outf_expected
+diff outf outf_expected >/dev/null 2>&1 && echo -n "${GREEN}OK${END}" || echo -n "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
+rm -f outf*
+
+echo -n "Test 2 : ./pipex Makefile cat \"grep 'clean'\" outf \t\t--> "
+./pipex Makefile "cat" "grep 'clean'" outf 2>/dev/null
+code=$(echo $?)
+cat Makefile | grep 'clean' > outf_expected
+diff outf outf_expected >/dev/null 2>&1 && echo -n "${GREEN}OK${END}" || echo -n "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
+rm -f outf*
+
+echo -n "Test 3 : ./pipex Makefile cat \"cut -d'=' -f1\" outf \t\t--> "
+./pipex Makefile "cat" "cut -d'=' -f1" outf 2>/dev/null
+code=$(echo $?)
+cat Makefile | cut -d'=' -f1 > outf_expected
+diff outf outf_expected >/dev/null 2>&1 && echo -n "${GREEN}OK${END}" || echo -n "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
+rm -f outf*
+
+# espaces (et quotes)
+	# ./pipex Makefile "cat" "cut -d' ' -f1" /dev/stdout
+	# mkdir "dossier joli" && ./pipex "ls 'dossier joli'" cat outf
+	# touch "new file" && ./pipex Makefile "cat" "ls \"new file\"" outfile
+echo "${ITA}Tests spaces parsing (single quotes must be parsed):${END}"
+
+echo -n "Test 1 : ./pipex Makefile \"echo yo\" \"echo ' '\" outf \t\t--> "
+./pipex Makefile "echo yo" "echo ' '" outf 2>/dev/null
+code=$(echo $?)
+echo ' ' > outf_expected
+diff outf outf_expected >/dev/null 2>&1 && echo -n "${GREEN}OK${END}" || echo -n "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
+rm -f outf*
+
+echo -n "Test 2 : ./pipex Makefile \"echo yo\" \"echo ' hello '\" outf \t--> "
+./pipex Makefile "echo yo" "echo ' hello '" outf 2>/dev/null
+code=$(echo $?)
+echo ' hello ' > outf_expected
+diff outf outf_expected >/dev/null 2>&1 && echo -n "${GREEN}OK${END}" || echo -n "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
+rm -f outf*
+
+echo -n "Test 3 : ./pipex Makefile cat \"cut -d' ' -f1\" outf \t\t--> "
+./pipex Makefile "cat" "cut -d' ' -f1" outf 2>/dev/null
+code=$(echo $?)
+cat Makefile | cut -d' ' -f1 > outf_expected
+diff outf outf_expected >/dev/null 2>&1 && echo -n "${GREEN}OK${END}" || echo -n "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
+rm -f outf*
+
+echo -n "Test 4 : touch \"t file\" && ./pipex Makefile cat \"ls 't file'\" outf \t--> "
+touch "t file"
+./pipex Makefile "cat" "ls -l 't file'" outf 2>/dev/null
+code=$(echo $?)
+ls -l 't file' > outf_expected
+diff outf outf_expected >/dev/null 2>&1 && echo -n "${GREEN}OK${END}" || echo -n "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
+rm -f outf* 't file'
+
+echo -n "Test 5 : touch \"t file\" && ./pipex Makefile cat \"ls t\ file\" outf \t--> "
+touch "t file"
+./pipex Makefile "cat" "ls -l t\ file" outf 2>/dev/null
+code=$(echo $?)
+ls -l t\ file > outf_expected
+diff outf outf_expected >/dev/null 2>&1 && echo -n "${GREEN}OK${END}" || echo -n "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo " ${
+GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
+rm -f outf* 't file'
+
+
+
 # bonus
 	# multi comd
 	# here doc + append
@@ -378,5 +456,11 @@ rm -f outf vlg.txt
 	# leaks
 	# segfault
 	# opened fd
+# espaces (et quotes)
+	# ./pipex Makefile "cat" "grep ' ' " /dev/stdout
+	# ./pipex Makefile "cat" "cut -d' ' -f1" /dev/stdout
+	# mkdir "dossier joli" && ./pipex "ls 'dossier joli'" cat outf
+	# touch "new file" && ./pipex Makefile "cat" "ls \"new file\"" outfile
+# IFS (tab instead of spaces for separator + changing IFS)
 
 make fclean >/dev/null 2>&1
