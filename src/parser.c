@@ -26,12 +26,10 @@ int	counter(char *str, char c)
 			i--;
 		str++;
 	}
-	ft_fprintf(2, "counter=%i\n", i);
 	return (i);
 }
 
 /*
-	- bool pour savoir si on est entre single quote (==quoted)
 	- si pas quoted, si \ et next <space>	--> skip \ et ' (str++ puis str++)
 	- si pas quoted, si ' et prev != \ 		--> on replace par -1
 	- ascii : 39=', 92=\
@@ -50,19 +48,18 @@ char	*space_to_minus(char *str)
 		else if (in_quote && str[i] == 39)
 			in_quote = 0;
 		else if (!in_quote && str[i] == 92 && str [i + 1] == ' ')
-			i++; // supp backslash + skipp <space> PB HERE + voir gestion du \\ dans dequote single
+			i++;
 		else if (!in_quote && str[i] == ' ')
 			str[i] = -1;
 	}
-	//ft_fprintf(2, "spaceto-1:%s\n", str);
 	return (str);
 }
 
 /*
- - si pas un ' ni un \			--> on copie le char
- - si \ et que next pas un '	--> on copie le \
- - si ' et que previous \		--> on copie le '
- - si un ' 						--> on skip
+ - si pas un ' ni un \						--> on copie le char
+ - si \ et que next pas un ' ni un space	--> on copie le \
+ - si ' et que previous \					--> on copie le '
+ - si un ' 									--> on skip
 */
 char	*dequote_single(char *str)
 {
@@ -78,22 +75,17 @@ char	*dequote_single(char *str)
 	{
 		if (str[i] != c && str[i] != '\\')
 			new[++j] = str[i];
-		else if (str[i] == '\\' && str[i + 1] != c)
+		else if (str[i] == '\\' && str[i + 1] != c && str[i + 1] != ' ')
 			new[++j] = str[i];
 		else if (i > 0 && str[i] == c && str[i - 1] == '\\')
 			new[++j] = str[i];
-		//ft_fprintf(2, "duringd:%s\n", new);
 	}
 	new[++j] = '\0';
-	//ft_fprintf(2, "dequote:%s\n", new);
-	//ft_fprintf(2, "--------------------\n", new);
 	return (new);
 }
 
 /* 
 	- exit failure + msg if odd number of single quotes
-	- replace <space> not between single quote by char -1
-	- supress single quotes
 	- ft_split on -1 later (parsing.c)
 */
 char	**quote_space_parser(int argc, char **argv)
@@ -113,8 +105,7 @@ char	**quote_space_parser(int argc, char **argv)
 				exit(EXIT_FAILURE);
 			}
 			argv[i] = space_to_minus(argv[i]);
-			if (count)
-				argv[i] = dequote_single(argv[i]);
+			argv[i] = dequote_single(argv[i]);
 			i++;
 		}
 	}
