@@ -36,6 +36,8 @@ void	clr_buf(char buf[], int j, char val)
 
 char	*finall(char *line, char buf[], int eof)
 {
+	if (eof == 0)
+		return (line);
 	if (eof < 0 || !strle(line))
 	{
 		free(line);

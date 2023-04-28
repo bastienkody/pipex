@@ -26,6 +26,8 @@ void	launch_here_doc(t_files *files)
 		line = get_next_line(0);
 		if (!line)
 			return (free(data));
+		if (*line == 0)
+			break ;
 		if (!ft_strncmp(line, files->lim, ft_strlen(files->lim)))
 		{
 			if (ft_strlen(line) == ft_strlen(files->lim) + 1)
@@ -36,8 +38,7 @@ void	launch_here_doc(t_files *files)
 			return ;
 	}
 	write(files->in_fd, data, ft_strlen(data));
-	free(line);
-	free(data);
+	return (free(line), free(data));
 }
 
 /*	open (or create) out in > 

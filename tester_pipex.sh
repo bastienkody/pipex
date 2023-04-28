@@ -5,7 +5,7 @@ uname -s | grep -qi darwin && os=mac && bin_path=/bin
 uname -s | grep -qi linux && os=linux && bin_path=/usr/bin
 
 # is there a rule bonus ?
-cat Makefile | grep -q bonus && bonus=1 || bonus=0
+cat Makefile | grep -q bonus: && bonus=1 || bonus=0
 
 alias vlgppx='/usr/bin/valgrind --trace-children=yes --leak-check=full --track-fds=yes'
 
@@ -29,7 +29,7 @@ YEL="\033[33m"
 END="\033[m"
 
 #norminette
-echo -n "Test norminette:"
+echo -n "${UNDERL}Test norminette:${END} \t\t\t-->"
 norm=$(find . | egrep ".*(\.c|\.h)$" | norminette)
 if [[ $(echo $norm | egrep -v "OK\!$") ]] ;
 then
@@ -41,7 +41,7 @@ fi
 
 #makefile 
 echo -n "Test makefile:"
-make 1>/dev/null 2> stderrmake.txt
+make re 1>/dev/null 2> stderrmake.txt
 make > stdoutmakebis.txt
 [[ -s stderrmake.txt ]] && echo "${RED} make a ecrit sur std err${END}" || echo -n "${GREEN} pas d'erreur make${END}" 
 echo -n " -- "
@@ -460,7 +460,6 @@ diff outf outf_expected >/dev/null 2>&1 && echo -n "${GREEN}OK${END}" || echo -n
 [[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
 rm -f outf* 't file'
 
-
 # backslash
 echo "${UNDERL}Tests backlash (non bloquants):${END}"
 
@@ -482,7 +481,14 @@ diff outf outf_expected >/dev/null 2>&1 && echo -n "${GREEN}OK${END}" || echo -n
 [[ $code -eq 0 ]] && echo " ${GREEN}(+ return status == 0 ok)${END}" || echo " ${YEL}(- return status != 0 ko)${END}"
 rm -f outf* 't\ file'
 
+
+#-------
 # bonus
+#-------
+# ./pipex here_doc EOF cat "cat" outf 2>/dev/null
+
+
+#bonus
 	# multi comd
 	# here doc + append
 # more than 511 cmd (1024 fd opened : )
