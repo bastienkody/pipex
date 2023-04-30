@@ -130,7 +130,7 @@ diff t1_expected t1_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || ech
 [[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f t1_*
 
-echo -ne "Test 2 : ./pipex Makefile \"${bin_path}/tail -n15\" \"${bin_path}/head -n6\" t1_output \t\t--> "
+echo -ne "Test 2 : ./pipex Makefile \"${bin_path}/tail -n15\" \"${bin_path}/head -n6\" t1_output\t--> "
 touch t1_output t1_expected
 ./pipex "Makefile" "${bin_path}/tail -n15" "${bin_path}/head -n6" "t1_output" 
 code=$(echo $?)
@@ -410,6 +410,7 @@ echo -e "${BLU_BG}Leaks via valgrind:${END}"
 echo -ne "Test 1 : vlgppx ./pipex Makefile cat cat outf \t\t\t--> "
 vlgppx ./pipex Makefile "cat" "cat" outf 2> vlg.txt
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+echo -e "FIRST PROC = $first_proc"
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 [[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak first proc${END}" || echo -ne "${RED}$first_proc leaks first proc${END}"
