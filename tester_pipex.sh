@@ -480,7 +480,8 @@ fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak a.out${END}" || echo -ne "${RED} - $second_proc leaks a.out${END}"
 [[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
 [[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
-rm -f outf vlg.txt a.out
+rm -f outf a.out
+exit
 
 fi
 
