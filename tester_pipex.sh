@@ -400,9 +400,9 @@ echo -e "${BLU_BG}Leaks via valgrind:${END}"
 
 echo -ne "Test 1 : vlgppx ./pipex Makefile cat cat outf \t\t\t--> "
 vlgppx ./pipex Makefile "cat" "cat" outf 2> vlg.txt
-first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
-second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
-main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
+first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 [[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak first proc${END}" || echo -ne "${RED}$first_proc leaks first proc${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak second proc${END}" || echo -ne "${RED} - $second_proc leaks second proc${END}"
 [[ $main_proc -eq 0 ]] && echo -e "${GREEN} - no leak main proc${END}" || echo -e "${RED} - $main_proc leaks main proc${END}"
@@ -587,7 +587,5 @@ fi
 	# multi comd
 	# vlg on multi cmds
 	# here doc + append + ctrl-D
-# quotes
-	# bad nb of quote
 
 make fclean >/dev/null 2>&1
