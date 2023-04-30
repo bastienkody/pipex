@@ -416,7 +416,7 @@ fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l
 [[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak cat${END}" || echo -ne "${RED}$first_proc leaks first cat${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak cat${END}" || echo -ne "${RED} - $second_proc leaks second cat${END}"
 [[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
-[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
 echo -ne "Test 2 : valgrind ./pipex Makefile yes head outf \t\t\t--> "
@@ -428,7 +428,7 @@ fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l
 echo -ne "${GREEN}$first_proc leaks yes (it's ok)${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak head${END}" || echo -ne "${RED} - $second_proc leaks head${END}"
 [[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
-[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
 echo -ne "Test 3 : valgrind ./pipex Makefile ${bin_path}/cat ${bin_path}/head outf \t--> "
@@ -437,10 +437,10 @@ first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l | tr -d "[:blank:]")
-[[ $first_proc -eq 0 ]] && echo -ne "${GREEN} - no leak cat${END}" || echo -ne "${RED} - $second_proc leaks cat${END}"
+[[ $first_proc -eq 0 ]] && echo -ne "${GREEN} no leak cat${END}" || echo -ne "${RED}$second_proc leaks cat${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak head${END}" || echo -ne "${RED} - $second_proc leaks head${END}"
 [[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
-[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fdd${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
 echo -ne "Test 4 : valgrind ./pipex infile_no_r cat \"echo yo\" outfile_no_w \t--> "
@@ -453,7 +453,7 @@ fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l
 [[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak cat${END}" || echo -ne "${RED}$first_proc leaks  cat${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak echo${END}" || echo -ne "${RED} - $second_proc leaks echo${END}"
 [[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
-[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f infile* outfile* vlg.txt
 
 echo -ne "Test 5 : valgrind ./pipex Makefile catiop \" \" outf \t\t\t--> "
@@ -465,10 +465,10 @@ fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l
 [[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak catiop${END}" || echo -ne "${RED}$first_proc leaks  catiop${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak empty cmd${END}" || echo -ne "${RED} - $second_proc leaks empty cmd${END}"
 [[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
-[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
-echo -ne "Test 6 : valgrind ./pipex Makefile ./a.out (chmod u-x) "echo yo" outf \t\t--> "
+echo -ne "Test 6 : valgrind ./pipex Makefile ./a.out (chmod u-x) "echo yo" outf \t--> "
 echo -e "#include <stdio.h>\nint main(void){printf(\"yo\");}" > main.c && gcc main.c && rm main.c
 chmod u-x a.out
 $vlgppx ./pipex Makefile "./a.out" "echo yo" outf > vlg.txt 2>&1
@@ -479,9 +479,8 @@ fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l
 [[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak a.out${END}" || echo -ne "${RED}$first_proc leaks a.out${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak echo${END}" || echo -ne "${RED} - $second_proc leaks echo${END}"
 [[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
-[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf a.out vlg.txt
-
 
 fi
 
@@ -641,8 +640,13 @@ rm -f outf vlg.txt
 fi
 
 # here doc + append + ctrl-D
-# ./pipex here_doc EOF cat "cat" outf 2>/dev/null
-
+# still unable to fulfill the here_doc launched by pipex via my script ; dont wanna ask user to do so ; fifo could be an idea ; can't simulate pipex here_doc via : 
+# cat >> LIM
+	#text
+	#text
+	#LIM
+# because it won't test the pipex here_doc
+# tried to put pipex in bg (&) but it gives back the prompt + i can't write to fd 0
 fi 
 
 #bonus
