@@ -123,9 +123,18 @@ echo -e "${BLU_BG}Absolut path cmd:${END}"
 
 echo -ne "Test 1 : ./pipex Makefile ${bin_path}/ls ${bin_path}/cat t1_output \t\t--> "
 touch t1_output t1_expected
-${bin_path}/ls < Makefile | ${bin_path}/cat > t1_expected
 ./pipex "Makefile" "${bin_path}/ls" "${bin_path}/cat" "t1_output" 
 code=$(echo $?)
+${bin_path}/ls < Makefile | ${bin_path}/cat > t1_expected 2>/dev/null
+diff t1_expected t1_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
+rm -f t1_*
+
+echo -ne "Test 2 : ./pipex Makefile \"${bin_path}/tail -n15\" \"${bin_path}/head -n6\" t1_output \t\t--> "
+touch t1_output t1_expected
+./pipex "Makefile" "${bin_path}/tail -n15" "${bin_path}/head -n6" "t1_output" 
+code=$(echo $?)
+${bin_path}/tail -n15 < Makefile | ${bin_path}/head -n6 > t1_expected 2>/dev/null
 diff t1_expected t1_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
 [[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f t1_*
@@ -264,7 +273,7 @@ echo -ne "Test 3 : ./pipex Makefile touch OUI lsop outfile_no_w \t\t--> "
 ./pipex Makefile "touch OUI" "lsop" outfile_no_w 2> stderr.txt
 code=$(echo $?)
 [[ $(ls -l | grep "OUI") ]] && echo -ne "${GREEN}OK${END}"  || echo -ne "${RED}KO${END}"
-[[ -f stderr.txt && $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -e "${YEL} (- err msg without \"Permission denied\")${END}"
+[[ -f stderr.txt && $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"Permission denied\")${END}"
 [[ $code -eq 1 ]] && echo -e "${GREEN}(+ return status == 1)${END}" || echo -e "${YEL}(- return status != 1)${END}"
 rm -f stderr.txt outfile* OUI 
 
@@ -380,7 +389,7 @@ unset PATH
 code=$(echo $?)
 PATH=$tmp_PATH && export PATH
 [[ -f stderr.txt && $(cat stderr.txt | grep -ic "command not found") -eq 2 ]] && echo -ne "${GREEN}OK${END}"
-[[ -f stderr.txt && $(cat stderr.txt | wc -l) -ne 2 ]] && echo -ne " ${YEL}KO (- not two lines written to stderr)${END}"
+[[ -f stderr.txt && $(cat stderr.txt | wc -l) -ne 2 ]] && echo -ne "${YEL}KO (- not two lines written to stderr)${END}"
 [[ $code -eq 127 ]] && echo -e " ${GREEN}(+ return status == 127)${END}" || echo -e " ${YEL}(- return status != 127)${END}"
 rm -f outf stderr.txt
 
