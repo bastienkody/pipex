@@ -431,7 +431,7 @@ echo -ne "${GREEN}$first_proc leaks yes (it's ok)${END}"
 [[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
-echo -ne "Test 3 : valgrind ./pipex Makefile ${bin_path}/cat ${bin_path}/head outf \t\t\t--> "
+echo -ne "Test 3 : valgrind ./pipex Makefile ${bin_path}/cat ${bin_path}/head outf \t--> "
 $vlgppx ./pipex Makefile ${bin_path}/cat ${bin_path}/head outf > vlg.txt 2>&1
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
@@ -443,7 +443,7 @@ fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l
 [[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
-echo -ne "Test 4 : valgrind ./pipex infile_no_r cat \"echo yo\" outfile_no_w \t\t\t--> "
+echo -ne "Test 4 : valgrind ./pipex infile_no_r cat \"echo yo\" outfile_no_w \t--> "
 touch infile_no_r outfile_no_w && chmod u-r infile_no_r && chmod u-w outfile_no_w
 $vlgppx ./pipex infile_no_r "cat" "echo yo" outfile_no_w > vlg.txt 2>&1
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
@@ -468,7 +468,7 @@ fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l
 [[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
-echo -ne "Test 6 : valgrind ./pipex Makefile ./a.out "echo yo" outf \t\t\t--> "
+echo -ne "Test 6 : valgrind ./pipex Makefile ./a.out (chmod u-x) "echo yo" outf \t\t--> "
 echo -e "#include <stdio.h>\nint main(void){printf(\"yo\");}" > main.c && gcc main.c && rm main.c
 chmod u-x a.out
 $vlgppx ./pipex Makefile "./a.out" "echo yo" outf > vlg.txt 2>&1
@@ -480,8 +480,8 @@ fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak echo${END}" || echo -ne "${RED} - $second_proc leaks echo${END}"
 [[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
 [[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
-rm -f outf a.out
-exit
+rm -f outf a.out vlg.txt
+
 
 fi
 
