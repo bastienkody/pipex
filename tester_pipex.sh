@@ -407,24 +407,28 @@ if [[ $os == "linux" ]] ; then
 
 echo -e "${BLU_BG}Leaks via valgrind:${END}"
 
-echo -ne "Test 1 : vlgppx ./pipex Makefile cat cat outf \t\t\t--> "
+echo -ne "Test 1 : valgrind ./pipex Makefile cat cat outf \t\t\t--> "
 $vlgppx ./pipex Makefile "cat" "cat" outf 2> vlg.txt
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+fd=$(cat vlg.txt | grep -c "Open file descriptor")
 [[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak first proc${END}" || echo -ne "${RED}$first_proc leaks first proc${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak second proc${END}" || echo -ne "${RED} - $second_proc leaks second proc${END}"
-[[ $main_proc -eq 0 ]] && echo -e "${GREEN} - no leak main proc${END}" || echo -e "${RED} - $main_proc leaks main proc${END}"
+[[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main proc${END}" || echo -ne "${RED} - $main_proc leaks main proc${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
-echo -ne "Test 2 : vlgppx ./pipex Makefile yes head outf \t\t\t--> "
+echo -ne "Test 2 : valgrind ./pipex Makefile yes head outf \t\t\t--> "
 $vlgppx ./pipex Makefile "yes" "head" outf 2> vlg.txt
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+fd=$(cat vlg.txt | grep -c "Open file descriptor")
 echo -ne "${GREEN}$first_proc leaks first proc (it's ok)${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak second proc${END}" || echo -ne "${RED} - $second_proc leaks second proc${END}"
-[[ $main_proc -eq 0 ]] && echo -e "${GREEN} - no leak main proc${END}" || echo -e "${RED} - $main_proc leaks main proc${END}"
+[[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main proc${END}" || echo -ne "${RED} - $main_proc leaks main proc${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
 #infile pb
@@ -580,10 +584,12 @@ diff t2_expected t2_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || ech
 rm -f t2_* 
 
 if [[ $os == "linux" ]] ; then
-echo -ne "Test 5 : vlgppx ./pipex Makefile cat cat cat cat cat cat outf\t\t\t--> "
+echo -ne "Test 5 : valgrind ./pipex Makefile cat cat cat cat cat cat outf\t\t\t--> "
 $vlgppx ./pipex Makefile cat cat cat cat cat cat outf 2> vlg.txt
 leaks=$(cat vlg.txt | grep -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
-[[ $leaks -eq 0 ]] && echo -e "${GREEN}no leak${END}" || echo -e "${RED}$leaks leaks${END}"
+fd=$(cat vlg.txt | grep -c "Open file descriptor")
+[[ $leaks -eq 0 ]] && echo -ne "${GREEN}no leak${END}" || echo -ne "${RED}$leaks leaks${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 fi
 
