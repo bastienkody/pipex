@@ -8,8 +8,8 @@ uname -s | grep -qi linux && os=linux && bin_path=/usr/bin
 # bonus rule ?
 cat Makefile | grep -q bonus: && bonus=1 || bonus=0
 
-alias vlgppx='/usr/bin/valgrind --trace-children=yes --leak-check=full --track-fds=yes'
-
+# const
+vlgppx='/usr/bin/valgrind --trace-children=yes --leak-check=full --track-fds=yes'
 ITA="\033[3m"
 UNDERL="\033[4m"
 GREEN="\033[32m"
@@ -408,9 +408,8 @@ if [[ $os == "linux" ]] ; then
 echo -e "${BLU_BG}Leaks via valgrind:${END}"
 
 echo -ne "Test 1 : vlgppx ./pipex Makefile cat cat outf \t\t\t--> "
-vlgppx ./pipex Makefile "cat" "cat" outf 2> vlg.txt
+$vlgppx ./pipex Makefile "cat" "cat" outf 2> vlg.txt
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
-echo -e "FIRST PROC = $first_proc"
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 [[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak first proc${END}" || echo -ne "${RED}$first_proc leaks first proc${END}"
@@ -419,7 +418,7 @@ main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0
 rm -f outf vlg.txt
 
 echo -ne "Test 2 : vlgppx ./pipex Makefile yes head outf \t\t\t--> "
-vlgppx ./pipex Makefile "yes" "head" outf 2> vlg.txt
+$vlgppx ./pipex Makefile "yes" "head" outf 2> vlg.txt
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
@@ -582,7 +581,7 @@ rm -f t2_*
 
 if [[ $os == "linux" ]] ; then
 echo -ne "Test 5 : vlgppx ./pipex Makefile cat cat cat cat cat cat outf\t\t\t--> "
-vlgppx ./pipex Makefile cat cat cat cat cat cat outf 2> vlg.txt
+$vlgppx ./pipex Makefile cat cat cat cat cat cat outf 2> vlg.txt
 leaks=$(cat vlg.txt | grep -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
 [[ $leaks -eq 0 ]] && echo -e "${GREEN}no leak${END}" || echo -e "${RED}$leaks leaks${END}"
 rm -f outf vlg.txt
