@@ -574,7 +574,7 @@ if [[ $os == "linux" ]] ; then
 echo -ne "Test 5 : vlgppx ./pipex Makefile cat cat cat cat cat cat outf\t\t\t--> "
 vlgppx ./pipex Makefile cat cat cat cat cat cat outf 2> vlg.txt
 leaks=$(cat vlg.txt | grep -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
-[[ $leaks -eq 0 ]] && echo -n "${GREEN}no leak${END}" || echo -n "${RED}$leaks leaks${END}"
+[[ $leaks -eq 0 ]] && echo -e "${GREEN}no leak${END}" || echo -e "${RED}$leaks leaks${END}"
 rm -f outf vlg.txt
 fi
 
