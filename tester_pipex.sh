@@ -408,34 +408,80 @@ if [[ $os == "linux" ]] ; then
 echo -e "${BLU_BG}Leaks via valgrind:${END}"
 
 echo -ne "Test 1 : valgrind ./pipex Makefile cat cat outf \t\t\t--> "
-$vlgppx ./pipex Makefile "cat" "cat" outf 2> vlg.txt
+$vlgppx ./pipex Makefile "cat" "cat" outf > vlg.txt 2>&1
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l | tr -d "[:blank:]")
-[[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak first proc${END}" || echo -ne "${RED}$first_proc leaks first proc${END}"
-[[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak second proc${END}" || echo -ne "${RED} - $second_proc leaks second proc${END}"
-[[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main proc${END}" || echo -ne "${RED} - $main_proc leaks main proc${END}"
+[[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak cat${END}" || echo -ne "${RED}$first_proc leaks first cat${END}"
+[[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak cat${END}" || echo -ne "${RED} - $second_proc leaks second cat${END}"
+[[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
 [[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
 echo -ne "Test 2 : valgrind ./pipex Makefile yes head outf \t\t\t--> "
-$vlgppx ./pipex Makefile "yes" "head" outf 2> vlg.txt
+$vlgppx ./pipex Makefile "yes" "head" outf > vlg.txt 2>&1
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l | tr -d "[:blank:]")
-echo -ne "${GREEN}$first_proc leaks first proc (it's ok)${END}"
-[[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak second proc${END}" || echo -ne "${RED} - $second_proc leaks second proc${END}"
-[[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main proc${END}" || echo -ne "${RED} - $main_proc leaks main proc${END}"
+echo -ne "${GREEN}$first_proc leaks yes (it's ok)${END}"
+[[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak head${END}" || echo -ne "${RED} - $second_proc leaks head${END}"
+[[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
 [[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
-#infile pb
-#outfile pb
-#unexisting cmd
-#cmd sans x rights
-#les fd ouverts sur le main process (si > 3 ko)
+echo -ne "Test 3 : valgrind ./pipex Makefile ${bin_path}/cat ${bin_path}/head outf \t\t\t--> "
+$vlgppx ./pipex Makefile ${bin_path}/cat ${bin_path}/head outf > vlg.txt 2>&1
+first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l | tr -d "[:blank:]")
+[[ $first_proc -eq 0 ]] && echo -ne "${GREEN} - no leak cat${END}" || echo -ne "${RED} - $second_proc leaks cat${END}"
+[[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak head${END}" || echo -ne "${RED} - $second_proc leaks head${END}"
+[[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
+rm -f outf vlg.txt
+
+echo -ne "Test 4 : valgrind ./pipex infile_no_r cat \"echo yo\" outfile_no_w \t\t\t--> "
+touch infile_no_r outfile_no_w && chmod u-r infile_no_r && chmod u-w outfile_no_w
+$vlgppx ./pipex infile_no_r "cat" "echo yo" outfile_no_w > vlg.txt 2>&1
+first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l | tr -d "[:blank:]")
+[[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak cat${END}" || echo -ne "${RED}$first_proc leaks  cat${END}"
+[[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak echo${END}" || echo -ne "${RED} - $second_proc leaks echo${END}"
+[[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
+rm -f infile* outfile* vlg.txt
+
+echo -ne "Test 5 : valgrind ./pipex Makefile catiop \" \" outf \t\t\t--> "
+$vlgppx ./pipex Makefile "catiop" " " outf > vlg.txt 2>&1
+first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l | tr -d "[:blank:]")
+[[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak catiop${END}" || echo -ne "${RED}$first_proc leaks  catiop${END}"
+[[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak empty cmd${END}" || echo -ne "${RED} - $second_proc leaks empty cmd${END}"
+[[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
+rm -f outf vlg.txt
+
+echo -ne "Test 6 : valgrind ./pipex Makefile cat ./a.out outf \t\t\t--> "
+echo -e "#include <stdio.h>\nint main(void){printf(\"yo\");}" > main.c && gcc main.c && rm main.c
+chmod u-x a.out
+$vlgppx ./pipex Makefile "cat" "./a.out" outf > vlg.txt 2>&1
+first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
+fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l | tr -d "[:blank:]")
+[[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak cat${END}" || echo -ne "${RED}$first_proc leaks cat${END}"
+[[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak a.out${END}" || echo -ne "${RED} - $second_proc leaks a.out${END}"
+[[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
+[[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
+rm -f outf vlg.txt a.out
+
 fi
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
@@ -593,14 +639,11 @@ fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l
 rm -f outf vlg.txt
 fi
 
-# here_doc
+# here doc + append + ctrl-D
 # ./pipex here_doc EOF cat "cat" outf 2>/dev/null
 
 fi 
 
 #bonus
-	# multi comd
-	# vlg on multi cmds
-	# here doc + append + ctrl-D
 
 make fclean >/dev/null 2>&1
