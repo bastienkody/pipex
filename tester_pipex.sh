@@ -468,16 +468,16 @@ fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l
 [[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
 
-echo -ne "Test 6 : valgrind ./pipex Makefile "echo yo" ./a.out outf \t\t\t--> "
+echo -ne "Test 6 : valgrind ./pipex Makefile ./a.out "echo yo" outf \t\t\t--> "
 echo -e "#include <stdio.h>\nint main(void){printf(\"yo\");}" > main.c && gcc main.c && rm main.c
 chmod u-x a.out
-$vlgppx ./pipex Makefile "echo yo" "./a.out" outf > vlg.txt 2>&1
+$vlgppx ./pipex Makefile "./a.out" "echo yo" outf > vlg.txt 2>&1
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l | tr -d "[:blank:]")
-[[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak echo${END}" || echo -ne "${RED}$first_proc leaks echo${END}"
-[[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak a.out${END}" || echo -ne "${RED} - $second_proc leaks a.out${END}"
+[[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak a.out${END}" || echo -ne "${RED}$first_proc leaks a.out${END}"
+[[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak echo${END}" || echo -ne "${RED} - $second_proc leaks echo${END}"
 [[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main${END}" || echo -ne "${RED} - $main_proc leaks main${END}"
 [[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf a.out
