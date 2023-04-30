@@ -412,7 +412,7 @@ $vlgppx ./pipex Makefile "cat" "cat" outf 2> vlg.txt
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
-fd=$(cat vlg.txt | grep  "Open file descriptor" | uniq | wc -l | tr -d "[:blank:]")
+fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l | tr -d "[:blank:]")
 [[ $first_proc -eq 0 ]] && echo -ne "${GREEN}no leak first proc${END}" || echo -ne "${RED}$first_proc leaks first proc${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak second proc${END}" || echo -ne "${RED} - $second_proc leaks second proc${END}"
 [[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main proc${END}" || echo -ne "${RED} - $main_proc leaks main proc${END}"
@@ -424,7 +424,7 @@ $vlgppx ./pipex Makefile "yes" "head" outf 2> vlg.txt
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
-fd=$(cat vlg.txt | grep  "Open file descriptor" | uniq | wc -l | tr -d "[:blank:]")
+fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l | tr -d "[:blank:]")
 echo -ne "${GREEN}$first_proc leaks first proc (it's ok)${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak second proc${END}" || echo -ne "${RED} - $second_proc leaks second proc${END}"
 [[ $main_proc -eq 0 ]] && echo -ne "${GREEN} - no leak main proc${END}" || echo -ne "${RED} - $main_proc leaks main proc${END}"
@@ -587,7 +587,7 @@ if [[ $os == "linux" ]] ; then
 echo -ne "Test 5 : valgrind ./pipex Makefile cat cat cat cat cat cat outf\t\t\t--> "
 $vlgppx ./pipex Makefile cat cat cat cat cat cat outf 2> vlg.txt
 leaks=$(cat vlg.txt | grep -A 1 "HEAP SUMMARY" | tail -n1 | grep -o "[0-9]* bytes" | cut -d' ' -f1)
-fd=$(cat vlg.txt | grep  "Open file descriptor" | uniq | wc -l | tr -d "[:blank:]")
+fd=$(cat vlg.txt | grep -o  "Open file descriptor [0-9]*:" | sort | uniq | wc -l | tr -d "[:blank:]")
 [[ $leaks -eq 0 ]] && echo -ne "${GREEN}no leak${END}" || echo -ne "${RED}$leaks leaks${END}"
 [[ $fd -eq 0 ]] && echo -e "${GREEN} - no extra fd onpened${END}" || echo -e "${RED} - $fd extra fd opened${END}"
 rm -f outf vlg.txt
