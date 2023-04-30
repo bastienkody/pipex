@@ -1,10 +1,11 @@
-#! /usr/bin/bash
+#! /bin/bash
 
 # machine info for bin_path (at least ok for ls, ko for touch)
 uname -s | grep -qi darwin && os=mac && bin_path=/bin 
 uname -s | grep -qi linux && os=linux && bin_path=/usr/bin
+#override: bin_path=/bin
 
-# is there a rule bonus ?
+# bonus rule ?
 cat Makefile | grep -q bonus: && bonus=1 || bonus=0
 
 alias vlgppx='/usr/bin/valgrind --trace-children=yes --leak-check=full --track-fds=yes'
@@ -71,40 +72,41 @@ fi
 
 #arg nb problem
 echo -ne "${BLU_BG}Test arg nb (<4):${END} \t\t\t\t\t\t-->"
+echo -e "yo\nyi" > infile
 ./pipex > no_arg.txt 2> no_arg_err.txt
-./pipex Makefile > one_arg.txt 2> one_arg_err.txt
-./pipex Makefile "echo yo" > two_arg.txt 2> two_arg_err.txt
-./pipex Makefile "echo yo" "echo yi" > three_arg.txt 2> three_arg_err.txt
-./pipex Makefile "echo yo" "echo yi" outfile > four_arg.txt 2> four_arg_err.txt
-if [[ -s no_arg.txt && -s one_arg.txt && -s two_arg.txt && -s three_arg.txt ]] ;
-then	echo -ne "${YEL} pipex wrote on std out (fd 1)${END} "
+./pipex infile > one_arg.txt 2> one_arg_err.txt
+./pipex infile "echo yo" > two_arg.txt 2> two_arg_err.txt
+./pipex infile "echo yo" "echo yi" > three_arg.txt 2> three_arg_err.txt
+./pipex infile "echo yo" "echo yi" outfile > four_arg.txt 2> four_arg_err.txt
+if [[ -s no_arg.txt && -s one_arg.txt && -s two_arg.txt && -s three_arg.txt ]] ; then
+	echo -ne "${YEL} pipex wrote on std out (fd 1)${END} "
 fi
-if [[ -s no_arg_err.txt || -s one_arg_err.txt || -s two_arg_err.txt || -s three_arg_err.txt ]] ;
-then	echo -ne "${GREEN} pipex wrote on std err (fd 2)${END} "
+if [[ -s no_arg_err.txt || -s one_arg_err.txt || -s two_arg_err.txt || -s three_arg_err.txt ]] ; then
+	echo -ne "${GREEN} pipex wrote on std err (fd 2)${END} "
 fi
-if [[ $(cat no_arg.txt no_arg_err.txt one_arg.txt one_arg_err.txt two_arg.txt two_arg_err.txt three_arg.txt three_arg_err.txt | egrep "(yi|yo)") ]] ;
-then	echo -ne "${RED} pipex rexecutes cmds ...${END}"
+if [[ $(cat no_arg.txt no_arg_err.txt one_arg.txt one_arg_err.txt two_arg.txt two_arg_err.txt three_arg.txt three_arg_err.txt | egrep "(yi|yo)") ]] ; then
+	echo -ne "${RED} pipex rexecutes cmds ...${END}"
 fi
-rm -rf *arg*.txt outfile
+rm -rf *arg*.txt outfile infile
 
 #basics tests
 echo -e "\n${BLU_BG}Basics:${END}"
 
 echo -ne "Test 1 : ./pipex Makefile ls ls t1_output \t\t\t--> "
 touch t1_output t1_expected #both created here bc of ls cmd
-ls > t1_expected
 ./pipex "Makefile" "ls" "ls" "t1_output" 
 code=$(echo $?)
-diff t1_expected t1_output 2>/dev/null && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e "${YEL}(- return status != 0 ko)${END}"
+ls > t1_expected
+diff t1_expected t1_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f t1_*
 
 echo -ne "Test 2 : ./pipex Makefile cat cat t2_output\t\t\t--> "
 touch t2_output
 ./pipex "Makefile" "cat" "cat" "t2_output" 
 code=$(echo $?)
-diff Makefile t2_output 2>/dev/null && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e "${YEL}(- return status != 0 ko)${END}"
+diff Makefile t2_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f t2_*
 
 echo -ne "Test 3 : ./pipex Makefile \"cat -e\" \"head -n3\" t3_output\t\t--> "
@@ -112,8 +114,8 @@ touch t3_output t3_expected
 ./pipex "Makefile" "cat -e" "head -n3" "t3_output" 
 code=$(echo $?)
 cat -e Makefile | head -n3 > t3_expected
-diff t3_expected t3_output 2>/dev/null && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO (cmd one after another instead of parallel)${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+diff t3_expected t3_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO (cmd one after another instead of parallel)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f t3_* 
 
 #cmd with absolute path
@@ -124,8 +126,8 @@ touch t1_output t1_expected
 ${bin_path}/ls < Makefile | ${bin_path}/cat > t1_expected
 ./pipex "Makefile" "${bin_path}/ls" "${bin_path}/cat" "t1_output" 
 code=$(echo $?)
-diff t1_expected t1_output 2>/dev/null && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+diff t1_expected t1_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f t1_*
 
 #non existing cmd w/ abs. path
@@ -136,24 +138,24 @@ ${bin_path}/lsoip < Makefile 2>/dev/null | ${bin_path}/cati > outf 2>/dev/null
 ./pipex "Makefile" "${bin_path}/lsoip" "${bin_path}/cati" "outf" 2> stderr.txt
 code=$(echo $?)
 [[ -s stderr.txt ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | egrep -i "(file|directory)") ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"No such file or directory\")${END}"
-[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127 ok)${END}" || echo -e "${YEL}(- return status != 127 ko)${END}"
+[[ $(cat stderr.txt | egrep -i "(file|directory)") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"No such file or directory\")${END}"
+[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127)${END}" || echo -e "${YEL}(- return status != 127)${END}"
 rm -f stderr.txt outf
 
 echo -ne "Test 2 : ./pipex Makefile touch OUI ${bin_path}/cati outf \t\t--> "
 ./pipex "Makefile" "touch OUI" "${bin_path}/cati" "outf" 2> stderr.txt
 code=$(echo $?)
 ls -l | grep -q OUI && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | egrep -i "(file|directory)") ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"No such file or directory\")${END}"
-[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127 ok)${END}" || echo -e "${YEL}(- return status != 127 ko)${END}"
+[[ $(cat stderr.txt | egrep -i "(file|directory)") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"No such file or directory\")${END}"
+[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127)${END}" || echo -e "${YEL}(- return status != 127)${END}"
 rm -f stderr.txt outf OUI
 
 echo -ne "Test 3 : ./pipex Makefile ${bin_path}/cati touch OUI outf \t\t--> "
 ./pipex "Makefile" "${bin_path}/cati" "touch OUI" "outf" 2> stderr.txt
 code=$(echo $?)
 ls -l | grep -q OUI && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | egrep -i "(file|directory)") ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"No such file or directory\")${END}"
-[[ $code -eq 0 ]] && echo -e "${GREEN}(+ return status == 0 ok)${END}" || echo -e "${YEL}(- return status != 0 ko)${END}"
+[[ $(cat stderr.txt | egrep -i "(file|directory)") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"No such file or directory\")${END}"
+[[ $code -eq 0 ]] && echo -e "${GREEN}(+ return status == 0)${END}" || echo -e "${YEL}(- return status != 0)${END}"
 rm -f stderr.txt outf OUI
 
 #non existing cmd w/ rel. path
@@ -164,24 +166,24 @@ lsoip < Makefile 2>/dev/null | cati > t1_expected 2>/dev/null
 ./pipex "Makefile" "lsoip" "cati" "outf" 2> stderr.txt
 code=$(echo $?)
 [[ -s stderr.txt ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | egrep -i "(command not found)") ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
-[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127 ok)${END}" || echo -e "${YEL}(- return status != 127 ko)${END}"
+[[ $(cat stderr.txt | egrep -i "(command not found)") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
+[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127)${END}" || echo -e "${YEL}(- return status != 127)${END}"
 rm stderr.txt t1_expected outf
 
 echo -ne "Test 2 : ./pipex Makefile touch OUI cati outf \t\t\t--> "
 ./pipex "Makefile" "touch OUI" "cati" "outf" 2> stderr.txt
 code=$(echo $?)
 ls -l | grep -q OUI && echo -ne "${GREEN}OK${END}"  || echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | egrep -i "command not found") ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"No such file or directory\")${END}"
-[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127 ok)${END}" || echo -e "${YEL}(- return status != 127 ko)${END}"
+[[ $(cat stderr.txt | egrep -i "command not found") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"No such file or directory\")${END}"
+[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127)${END}" || echo -e "${YEL}(- return status != 127)${END}"
 rm -f stderr.txt outf OUI
 
 echo -ne "Test 3 : ./pipex Makefile cati touch OUI outf \t\t\t--> "
 ./pipex "Makefile" "cati" "touch OUI" "outf" 2> stderr.txt
 code=$(echo $?)
 ls -l | grep -q OUI && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | egrep -i "command not found") ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"No such file or directory\")${END}"
-[[ $code -eq 0 ]] && echo -e "${GREEN}(+ return status == 0 ok)${END}" || echo -e "${YEL}(- return status != 0 ko)${END}"
+[[ $(cat stderr.txt | egrep -i "command not found") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"No such file or directory\")${END}"
+[[ $code -eq 0 ]] && echo -e "${GREEN}(+ return status == 0)${END}" || echo -e "${YEL}(- return status != 0)${END}"
 rm -f stderr.txt outf OUI
 
 #empty commands
@@ -192,24 +194,24 @@ echo -ne "Test 1 : ./pipex Makefile \" \" \" \" outf \t\t\t\t--> "
 code=$(echo $?)
 [[ -s outf ]] || echo -ne "${GREEN}OK${END}"
 [[ -s outf ]] && echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | egrep -ic "command not found") -eq 2 ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
-[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127 ok)${END}" || echo -e "${YEL}(- return status != 127 ko)${END}"
+[[ $(cat stderr.txt | egrep -ic "command not found") -eq 2 ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
+[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127)${END}" || echo -e "${YEL}(- return status != 127)${END}"
 rm -f outf stderr.txt
 
 echo -ne "Test 2 : ./pipex Makefile "touch OUI" \" \" outf \t\t\t--> "
 ./pipex Makefile "touch OUI" " " outf 2> stderr.txt
 code=$(echo $?)
 ls -l | grep -q OUI && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-cat stderr.txt | egrep -qi "command not found" && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
-[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127 ok)${END}" || echo -e "${YEL}(- return status != 127 ko)${END}"
+cat stderr.txt | egrep -qi "command not found" && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
+[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127)${END}" || echo -e "${YEL}(- return status != 127)${END}"
 rm -f outf stderr.txt outf OUI
 
 echo -ne "Test 3 : ./pipex Makefile \" \" touch OUI outf \t\t\t--> "
 ./pipex Makefile "touch OUI" " " outf 2> stderr.txt
 code=$(echo $?)
 ls -l | grep -q OUI && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-cat stderr.txt | egrep -qi "command not found" && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
-[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127 ok)${END}" || echo -e "${YEL}(- return status != 127 ko)${END}"
+cat stderr.txt | egrep -qi "command not found" && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
+[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127)${END}" || echo -e "${YEL}(- return status != 127)${END}"
 rm -f outf stderr.txt outf OUI
 
 #infile pb tests
@@ -220,24 +222,24 @@ echo -ne "Test 1 : ./pipex infile_r touch truc touch truc2 t1_output\t--> "
 ./pipex infile_r "touch truc" "touch truc2" t1_output
 code=$(echo $?)
 [[ $(ls -l | egrep -c "truc2?") -eq 2 ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f t1_* truc*
 
 echo -ne "Test 2 : ./pipex infile_no_r touch NON touch OUI t2_output\t--> "
 ./pipex infile_no_r "touch NOT" "touch OUI" t2_output 2> stderr.txt
 code=$(echo $?)
 [[ !$(ls -l | grep "NOT") && $(ls -l | grep "OUI") ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne " ${GREEN} (+ err msg ok)${END}" || echo -ne " ${YEL} (- err msg without \"Permission denied\")${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ -f stderr.txt && $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne " ${GREEN} (+ err msg)${END}" || echo -ne " ${YEL}(- err msg without \"Permission denied\")${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f stderr.txt t2_* OUI
 
 echo -ne "Test 3 : ./pipex infile_no_r lsop echo yo t2_output\t\t--> "
 ./pipex infile_no_r "lsop" "echo yo" t2_output 2> stderr.txt
 code=$(echo $?)
-[[ $(cat t2_output) == "yo" ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne " ${GREEN} (+ err msg ok)${END}" || echo -ne " ${YEL} (- err msg without \"Permission denied\")${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
-rm stderr.txt infile*  t2_*
+[[ -f t2_output && $(cat t2_output) == "yo" ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
+[[ -f stderr.txt && $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne " ${GREEN}(+ err msg)${END}" || echo -ne " ${YEL}(- err msg without \"Permission denied\")${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
+rm -f stderr.txt infile*  t2_*
 
 #outfile pb tests
 echo -e "${BLU_BG}Outfile no writable:${END}"
@@ -247,23 +249,23 @@ echo -ne "Test 1 : ./pipex Makefile touch truc touch truc2 outfile_w \t--> "
 ./pipex Makefile "touch truc" "touch truc2" outfile_w
 code=$(echo $?)
 [[ $(ls -l | egrep "truc2?" | wc -l) -eq 2 ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f truc*
 
 echo -ne "Test 2 : ./pipex Makefile touch OUI touch NON outfile_no_w \t--> "
 ./pipex Makefile "touch OUI" "touch NON" outfile_no_w 2> stderr.txt
 code=$(echo $?)
 [[ !$(ls -l | grep "NOT") && $(ls -l | grep "OUI") ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"Permission denied\")${END}"
-[[ $code -eq 1 ]] && echo -e "${GREEN}(+ return status == 1 ok)${END}" || echo -e "${YEL}(- return status != 1 ko)${END}"
+[[ -f stderr.txt && $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"Permission denied\")${END}"
+[[ $code -eq 1 ]] && echo -e "${GREEN}(+ return status == 1)${END}" || echo -e "${YEL}(- return status != 1)${END}"
 rm -f stderr.txt OUI
 
 echo -ne "Test 3 : ./pipex Makefile touch OUI lsop outfile_no_w \t\t--> "
 ./pipex Makefile "touch OUI" "lsop" outfile_no_w 2> stderr.txt
 code=$(echo $?)
 [[ $(ls -l | grep "OUI") ]] && echo -ne "${GREEN}OK${END}"  || echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -e "${YEL} (- err msg without \"Permission denied\")${END}"
-[[ $code -eq 1 ]] && echo -e "${GREEN}(+ return status == 1 ok)${END}" || echo -e "${YEL}(- return status != 1 ko)${END}"
+[[ -f stderr.txt && $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -e "${YEL} (- err msg without \"Permission denied\")${END}"
+[[ $code -eq 1 ]] && echo -e "${GREEN}(+ return status == 1)${END}" || echo -e "${YEL}(- return status != 1)${END}"
 rm -f stderr.txt outfile* OUI 
 
 # outfile created before executing ls
@@ -272,23 +274,23 @@ echo -e "${BLU_BG}Outfile created before exec:${END}"
 echo -ne "Test 1 : ./pipex Makefile cat ls outf \t\t\t\t--> "
 rm -f outf
 ./pipex Makefile "cat" "ls" outf 2>/dev/null
-cat outf | grep -q "outf" && echo -e "${GREEN}OK${END}" || echo -e "${RED}KO (missing "outf" in ls result)${END}"
+[[ -f outf ]] && cat outf | grep -q "outf" && echo -e "${GREEN}OK${END}" || echo -e "${RED}KO (missing "outf" in ls result)${END}"
 rm -f outf
 
 echo -ne "Test 2 : ./pipex Makefile ls cat outf \t\t\t\t--> "
 rm -f outf
 ./pipex Makefile "ls" "cat" outf 2>/dev/null
-cat outf | grep -q "outf" && echo -e "${GREEN}OK${END}" || echo -e "${RED}KO (missing "outf" in ls result)${END}"
+[[ -f outf ]] && cat outf | grep -q "outf" && echo -e "${GREEN}OK${END}" || echo -e "${RED}KO (missing "outf" in ls result)${END}"
 rm -f outf
 
 #silmultaneous cmd test
-echo -e "${BLU_BG}Concurrency of the cmds:${END}"
+echo -e "${BLU_BG}Concurrency of cmds:${END}"
 
 echo -ne "Test 1 : ./pipex Makefile yes "echo yo" outf \t\t\t--> "
 ./pipex Makefile "yes" "echo yo" outf
 code=$(echo $?)
-[[ $(cat outf) -eq "yo" ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ -f outf && $(cat outf) -eq "yo" ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf
 
 echo -ne "Test 2 : ./pipex Makefile "sleep 2" "sleep 1" outf \t\t\t--> "
@@ -297,7 +299,7 @@ t1=$(date +%s)
 code=$(echo $?)
 t2=$(date +%s)
 [[ $((t2 - t1)) -eq 2 ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf
 
 # TEST 3 ET 4 : risque de faire planter le testeur ... mettre un timeout + kill yes process if ko
@@ -306,8 +308,8 @@ echo -ne "Test 3 : ./pipex Makefile "yes" "cati" outf \t\t\t--> "
 code=$(echo $?)
 [[ -s outf ]] || echo -ne "${GREEN}OK${END}"
 [[ -s outf ]] && echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | grep -i "command not found") ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
-[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127 ok)${END}" || echo -e "${YEL}(- return status != 127 ko)${END}"
+[[ $(cat stderr.txt | grep -i "command not found") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
+[[ $code -eq 127 ]] && echo -e "${GREEN}(+ return status == 127)${END}" || echo -e "${YEL}(- return status != 127)${END}"
 rm -f stderr.txt outf
 
 echo -ne "Test 4 : ./pipex Makefile "yes" "cati" outfile_no_w \t\t--> "
@@ -316,8 +318,8 @@ touch outfile_no_w && chmod u-w outfile_no_w
 code=$(echo $?)
 #timeout stuff
 echo -ne "${GREEN}OK${END}"
-[[ $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"Permission denied\")${END}"
-[[ $code -eq 1 ]] && echo -e "${GREEN}(+ return status == 1 ok)${END}" || echo -e "${YEL}(- return status != 1 ko)${END}"
+[[ $(cat stderr.txt | grep -i "permission denied") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"Permission denied\")${END}"
+[[ $code -eq 1 ]] && echo -e "${GREEN}(+ return status == 1)${END}" || echo -e "${YEL}(- return status != 1)${END}"
 rm -f stderr.txt outf
 
 # executable (+ pas les droits)
@@ -328,26 +330,26 @@ echo -e "#include <stdio.h>\nint main(void){printf(\"yo\");}" > main.c && gcc ma
 echo -ne "Test 1 : ./pipex Makefile ./a.out cat outf \t\t\t--> "
 ./pipex Makefile "./a.out" "cat" outf 2> stderr.txt
 code=$(echo $?)
-[[ $(cat outf) == "yo" ]] && echo -ne "${GREEN}OK${END}"|| echo -ne "${RED}KO${END}"
+[[ -f outf && $(cat outf) == "yo" ]] && echo -ne "${GREEN}OK${END}"|| echo -ne "${RED}KO${END}"
 [[ -s stderr.txt ]] && echo -ne "${RED} KO : you wrote on stderr${END}"
-[[ $code -eq 0 ]] && echo -e "${GREEN} (+ return status == 0 ok)${END}" || echo -e "${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e "${GREEN} (+ return status == 0)${END}" || echo -e "${YEL}(- return status != 0)${END}"
 rm -f stderr.txt outf
 
 echo -ne "Test 2 : ./pipex Makefile ls ./ls outf \t\t\t\t--> "
 ./pipex Makefile "ls" "./ls" outf 2> stderr.txt
 code=$(echo $?)
-[[ $(cat outf) == "yo" ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
+[[  -f outf && $(cat outf) == "yo" ]] && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
 [[ -s stderr.txt ]] && echo -ne "${RED} KO : you wrote on stderr${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e "${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e "${YEL}(- return status != 0)${END}"
 rm -f stderr.txt ls outf
 
 echo -ne "Test 3 : ./pipex Makefile ls ./a.out (chmod u-x) outf \t\t--> "
 chmod u-x a.out
 ./pipex Makefile "ls" "./a.out" outf 2> stderr.txt
 code=$(echo $?)
-[[ $code -eq 126 ]] && $(cat stderr.txt | grep -qi "permission denied") && echo -e "${GREEN}OK (code 126 + permission denied)${END}"
+[[ $code -eq 126 ]] && $([[ -f stderr.txt ]] && cat stderr.txt | grep -qi "permission denied") && echo -e "${GREEN}OK (code 126 + permission denied)${END}"
 [[ $code -ne 126 ]] && echo -ne "${YEL}KO (code != 126)${END}"
-cat stderr.txt | grep -qi "permission denied" || echo -e "${YEL}KO (err msg != Permission denied)${END}"
+[[ -f stderr.txt ]] && cat stderr.txt | grep -qi "permission denied" || echo -e "${YEL}(err msg != Permission denied)${END}"
 rm -f stderr.txt a.out outf
 
 # env -i
@@ -356,16 +358,16 @@ echo -e "${BLU_BG}Empty environnement:${END}"
 echo -ne "Test 1 : env -i ./pipex Makefile cat ls outf \t\t\t--> "
 env -i ./pipex Makefile "cat" "echo yo" outf 2> stderr.txt
 code=$(echo $?)
-cat outf | grep -q yo && ( echo -ne "${GREEN}OK - WOW t'es chaud, explique moi stp!${END}" && [[ $code -eq 0 ]] && echo -e " ${GREEN}(return status == 0)${END}" || echo -e " ${YEL}(return status != 0)${END}" )
-[[ $(cat stderr.txt | grep -ic "command not found") -eq 2 ]] && echo -ne "${GREEN}OK${END}"
-cat outf | grep -q yo ||( [[ $code -eq 127 ]] && echo -e " ${GREEN}(+ return status == 127 ok)${END}" || echo -e " ${YEL}(- return status != 127 ko)${END}" )
+[[ -f outf ]] && cat outf | grep -q yo && ( echo -ne "${GREEN}OK - WOW t'es chaud, explique moi stp!${END}" && [[ $code -eq 0 ]] && echo -e " ${GREEN}(return status == 0)${END}" || echo -e " ${YEL}(return status != 0)${END}" )
+[[ -f stderr.txt && $(cat stderr.txt | grep -ic "command not found") -eq 2 ]] && echo -ne "${GREEN}OK${END}"
+[[ -f outf ]] && cat outf | grep -q yo ||( [[ $code -eq 127 ]] && echo -e " ${GREEN}(+ return status == 127)${END}" || echo -e " ${YEL}(- return status != 127)${END}" )
 rm -f outf stderr.txt
 
 echo -ne "Test 2 : env -i ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf\t--> "
 env -i ./pipex Makefile "${bin_path}/cat" "${bin_path}/cat" outf 2> stderr.txt
 code=$(echo $?)
 diff Makefile outf 2>/dev/null && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf stderr.txt
 
 # unset $PATH (with absolute cmd)
@@ -377,9 +379,9 @@ unset PATH
 ./pipex Makefile "ls" "cat" outf 2> stderr.txt
 code=$(echo $?)
 PATH=$tmp_PATH && export PATH
-[[ $(cat stderr.txt | grep -ic "command not found") -eq 2 ]] && echo -ne "${GREEN}OK${END}"
-[[ $(cat stderr.txt | wc -l) -ne 2 ]] && echo -ne "$ ${YEL}(- not two lines written to stderr)${END}"
-[[ $code -eq 127 ]] && echo -e " ${GREEN}(+ return status == 127 ok)${END}" || echo -e " ${YEL}(- return status != 127 ko)${END}"
+[[ -f stderr.txt && $(cat stderr.txt | grep -ic "command not found") -eq 2 ]] && echo -ne "${GREEN}OK${END}"
+[[ -f stderr.txt && $(cat stderr.txt | wc -l) -ne 2 ]] && echo -ne " ${YEL}KO (- not two lines written to stderr)${END}"
+[[ $code -eq 127 ]] && echo -e " ${GREEN}(+ return status == 127)${END}" || echo -e " ${YEL}(- return status != 127)${END}"
 rm -f outf stderr.txt
 
 echo -ne "Test 2 : unset PATH && ./pipex Makefile ${bin_path}/cat ${bin_path}/cat outf \t--> "
@@ -388,7 +390,7 @@ unset PATH
 code=$(echo $?)
 PATH=$tmp_PATH && export PATH
 diff Makefile outf 2>/dev/null && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf stderr.txt
 
 # valgrind
@@ -411,7 +413,7 @@ vlgppx ./pipex Makefile "yes" "head" outf 2> vlg.txt
 first_proc=$(cat vlg.txt | grep -m1 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 second_proc=$(cat vlg.txt | grep -m2 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
 main_proc=$(cat vlg.txt | grep -m3 -A 1 "HEAP SUMMARY" | tail -n1 | egrep -o "[0-9]*,?[0-9]* bytes" | cut -d' ' -f1)
-echo -ne "${GREEN}$first_proc leaks first proc (it's ok)${END}"
+echo -ne "${GREEN}$first_proc leaks first proc (it's)${END}"
 [[ $second_proc -eq 0 ]] && echo -ne "${GREEN} - no leak second proc${END}" || echo -ne "${RED} - $second_proc leaks second proc${END}"
 [[ $main_proc -eq 0 ]] && echo -e "${GREEN} - no leak main proc${END}" || echo -e "${RED} - $main_proc leaks main proc${END}"
 rm -f outf vlg.txt
@@ -436,7 +438,7 @@ echo -ne "Test 1 : ./pipex Makefile \"echo yo\" \"echo 'a' 'b' 'c'\" outf \t--> 
 code=$(echo $?)
 echo 'a' 'b' 'c' > outf_expected
 diff outf outf_expected >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf*
 
 echo -ne "Test 2 : ./pipex Makefile cat \"grep 'clean'\" outf \t\t--> "
@@ -444,7 +446,7 @@ echo -ne "Test 2 : ./pipex Makefile cat \"grep 'clean'\" outf \t\t--> "
 code=$(echo $?)
 cat Makefile | grep 'clean' > outf_expected
 diff outf outf_expected >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf*
 
 echo -ne "Test 3 : ./pipex Makefile cat \"cut -d'=' -f1\" outf \t\t--> "
@@ -452,7 +454,14 @@ echo -ne "Test 3 : ./pipex Makefile cat \"cut -d'=' -f1\" outf \t\t--> "
 code=$(echo $?)
 cat Makefile | cut -d'=' -f1 > outf_expected
 diff outf outf_expected >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
+rm -f outf*
+
+echo -ne "Test 4 : ./pipex Makefile cat \"echo ''yo'\" outf \t\t--> "
+./pipex Makefile "cat" "echo ''yo'" outf 2>/dev/null
+code=$(echo $?)
+echo outf | grep -q yo && echo -ne "${RED}KO (odd nb of quotes)${END}" || echo -ne "${GREEN}OK${END}" 
+[[ $code -ne 0 ]] && echo -e " ${GREEN}(+ return status != 0)${END}" || echo -e " ${YEL}(- return status == 0)${END}"
 rm -f outf*
 
 # <spaces> (if pb, stop using ft_split with space as separator. Think about a char value you would never receive in argv. Think about spaces enclosed in single quotes too)
@@ -463,7 +472,7 @@ echo -ne "Test 1 : ./pipex Makefile \"echo yo\" \"echo ' '\" outf \t\t--> "
 code=$(echo $?)
 echo ' ' > outf_expected
 diff outf outf_expected >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf*
 
 echo -ne "Test 2 : ./pipex Makefile \"echo yo\" \"echo ' hello '\" outf \t--> "
@@ -471,7 +480,7 @@ echo -ne "Test 2 : ./pipex Makefile \"echo yo\" \"echo ' hello '\" outf \t--> "
 code=$(echo $?)
 echo ' hello ' > outf_expected
 diff outf outf_expected >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf*
 
 echo -ne "Test 3 : ./pipex Makefile cat \"cut -d' ' -f1\" outf \t\t--> "
@@ -479,7 +488,7 @@ echo -ne "Test 3 : ./pipex Makefile cat \"cut -d' ' -f1\" outf \t\t--> "
 code=$(echo $?)
 cat Makefile | cut -d' ' -f1 > outf_expected
 diff outf outf_expected >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf*
 
 echo -ne "Test 4 : touch \"t file\" && ./pipex Makefile cat \"ls 't file'\" outf \t--> "
@@ -488,19 +497,19 @@ touch "t file"
 code=$(echo $?)
 ls -l 't file' > outf_expected
 diff outf outf_expected >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf* 't file'
 
 # backslash (cancels interpretation on the following char ; it is not even required in minishell ...)
 echo -e "${BLU_BG}Backlash parsing:${END}"
 
-echo -ne "Test 1 : touch \"t file\" && ./pipex Makefile cat \"ls t\ file\" outf \t--> "
+echo -ne "Test 1 : touch t\ file && ./pipex Makefile cat \"ls t\ file\" outf \t--> "
 touch "t file"
 ./pipex Makefile "cat" "ls -l t\ file" outf 2>/dev/null
 code=$(echo $?)
 ls -l t\ file > outf_expected
 diff outf outf_expected >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf* 't file'
 
 echo -ne "Test 2 : touch 't\ file' && ./pipex Makefile cat \"ls 't\ file'\" outf \t--> "
@@ -509,7 +518,7 @@ touch 't\ file'
 code=$(echo $?)
 ls 't\ file' > outf_expected
 diff outf outf_expected >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e " ${YEL}(- return status != 0 ko)${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e " ${YEL}(- return status != 0)${END}"
 rm -f outf* 't\ file'
 
 # fd limit
@@ -518,7 +527,7 @@ rm -f outf* 't\ file'
 # -----------------------------------------------------------------------------------------------------------------------------------------
 # BONUS TESTS : run --> bash tester_pipex.sh -bonus
 # -----------------------------------------------------------------------------------------------------------------------------------------
-if [[ $1 =~ -b$|-bonus$ ]] ; then
+if [[ ! $1 =~ -m$|-mandatory$ ]] ; then
 
 echo -e "${YEL_BG}Following tests are required to validate pipex bonuses${END}"
 
@@ -529,8 +538,8 @@ echo -ne "Test 1 : ./pipex Makefile cat cat cat t2_output\t\t\t\t\t--> "
 touch t2_output
 ./pipex "Makefile" "cat" "cat" "cat" "t2_output" 2>/dev/null
 code=$(echo $?)
-diff Makefile t2_output 2>/dev/null && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e "${YEL}(- return status != 0 ko)${END}"
+diff Makefile t2_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e "${YEL}(- return status != 0)${END}"
 rm -f t2_*
 
 echo -ne "Test 2 : ./pipex Makefile ls cat cat cat cat cat cat cat cat cat cat t2_output\t--> "
@@ -538,8 +547,8 @@ touch t2_output t2_expected
 ./pipex "Makefile" ./pipex Makefile ls cat cat cat cat cat cat cat cat cat cat t2_output 2>/dev/null
 code=$(echo $?)
 ls > t2_expected
-diff t2_expected t2_output 2>/dev/null && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e "${YEL}(- return status != 0 ko)${END}"
+diff t2_expected t2_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e "${YEL}(- return status != 0)${END}"
 rm -f t2_*
 
 echo -ne "Test 3 : ./pipex Makefile yes headi pwd \"cat -e\" t2_output\t\t\t--> "
@@ -548,8 +557,8 @@ touch t2_output t2_expected
 code=$(echo $?)
 pwd | cat -e > t2_expected
 diff t2_expected t2_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $(cat stderr.txt | grep -i "command not found") ]] && echo -ne "${GREEN} (+ err msg ok)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e "${YEL}(- return status != 0 ko)${END}"
+[[ -f stderr.txt && $(cat stderr.txt | grep -i "command not found") ]] && echo -ne "${GREEN} (+ err msg)${END}" || echo -ne "${YEL} (- err msg without \"Command not found\")${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e "${YEL}(- return status != 0)${END}"
 rm -f t2_* stderr.txt
 
 echo -ne "Test 4 : ./pipex Makefile date \"man env\" cat \"grep -i exit\" t2_output\t\t--> "
@@ -557,8 +566,8 @@ touch t2_output t2_expected
 ./pipex Makefile date "man env" cat "grep -i exit" t2_output 2> /dev/null
 code=$(echo $?)
 date | man env | cat | grep -i exit > t2_expected 2>/dev/null
-diff t2_expected t2_output 2>/dev/null && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
-[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0 ok)${END}" || echo -e "${YEL}(- return status != 0 ko)${END}"
+diff t2_expected t2_output >/dev/null 2>&1 && echo -ne "${GREEN}OK${END}" || echo -ne "${RED}KO${END}"
+[[ $code -eq 0 ]] && echo -e " ${GREEN}(+ return status == 0)${END}" || echo -e "${YEL}(- return status != 0)${END}"
 rm -f t2_* 
 
 if [[ $os == "linux" ]] ; then
@@ -578,6 +587,7 @@ fi
 	# multi comd
 	# vlg on multi cmds
 	# here doc + append + ctrl-D
-
+# quotes
+	# bad nb of quote
 
 make fclean >/dev/null 2>&1
