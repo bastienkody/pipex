@@ -1,0 +1,45 @@
+int pipefd[4];
+
+
+pipefd[0] = READ_END 1
+pipefd[1] = WRITE_END 1
+
+pipefd[2] = READ_END 2
+pipefd[3] = WRITE_END 2
+
+
+
+A INVERSER (0=1 et 2=3) 
+1st command : 
+	-reads stdin 
+	-outputs in pipefd[0]
+
+Intermediate odd : 
+	-reads from pipefd[1]
+	-outputs in pipefd[2]
+
+Intermediate even : 
+	-reads from pipedfd[3]
+	-outputs in pipefd[0]
+
+Last cmd : 
+	-reads from pipefd[1] if odd - [3] if even
+	-outputs to sdtdout
+
+
+Odd cmd : 
+		-reads from pipefd[1]
+	if last cmd
+		-outputs stdout
+	else
+		-outputs in pipefd[2]
+
+Even  cmd : 
+	if first cmd
+		-reads stdin
+	else
+		-reads from pipedfd[3]
+	if last cmd
+		-outputs in stdout
+	else
+		-outputs in pipefd[0]

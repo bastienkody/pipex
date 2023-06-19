@@ -21,11 +21,6 @@ void	close_n_free(t_info *info)
 			unlink("/tmp/.here_doc.txt");
 		free(info->files);
 	}
-	if (info->cmd_nb && info->pipefd)
-	{
-		close_pipefd(info->cmd_nb, info->pipefd);
-		free_int_matrix(info->pipefd, info->cmd_nb);
-	}
 	if (info->path)
 		ft_lstclear(&(info->path), &free);
 	if (info->cmd_start)
@@ -68,42 +63,4 @@ int	analyze_ex_code(int status, t_info *info)
 	if (WIFSIGNALED(status))
 		return (WTERMSIG(status));
 	return (status);
-}
-
-int	**get_pipefd(t_info *info)
-{
-	int	i;
-	int	**pipefd;
-
-	pipefd = malloc((info->cmd_nb - 1) * sizeof(int *));
-	if (!pipefd)
-		return (NULL);
-	i = 0;
-	while (i < info->cmd_nb - 1)
-	{
-		pipefd[i] = malloc(2 * sizeof(int));
-		if (!pipefd[i] || pipe(pipefd[i]) == -1)
-		{
-			perror("pipex");
-			free_int_matrix(pipefd, i + 1);
-			return (NULL);
-		}
-		i++;
-	}
-	return (pipefd);
-}
-
-void	close_pipefd(int cmd_nb, int **pipefd)
-{
-	int	i;
-
-	if (!cmd_nb || !pipefd)
-		return ;
-	i = 0;
-	while (i < cmd_nb - 1)
-	{
-		close(pipefd[i][WRITE_END]);
-		close(pipefd[i][READ_END]);
-		i++;
-	}
 }

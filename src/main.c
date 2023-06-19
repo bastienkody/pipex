@@ -33,7 +33,6 @@ t_info	*init_info(int argc, char **argv, char **envp)
 	info = malloc(1 * sizeof(t_info));
 	if (!info)
 		return (NULL);
-	info->pipefd = NULL;
 	info->cmd_nb = 0;
 	info->cmd_start = NULL;
 	info->path = path_to_llist(envp, info);
@@ -51,31 +50,19 @@ t_info	*init_info(int argc, char **argv, char **envp)
 
 void	pipex(t_info *info, char **envp)
 {
-	pid_t	pid;
+	int	prevpipe;
+
+	prevpipe = dup_infile(info);
+	//prevpipe = dup(0);
 
 	while (info->cmd)
 	{
-		pid = fork();
-		if (pid == -1)
-			perror("fork");
-		if (pid == 0)
-			execute(info, envp);
-		if (pid > 0)
-		{
-			if (!info->cmd->next)
-				info->last_pid = pid;
-			if (info->cmd->index == 1)
-				close(info->pipefd[info->cmd->index - 1][WRITE_END]);
-			else if (info->cmd->index != 0)
-			{
-				close(info->pipefd[info->cmd->index - 2][READ_END]);
-				close(info->pipefd[info->cmd->index - 1][WRITE_END]);
-			}
-		}
+		if (info->cmd->next)
+			fork_pipe_n_dup(info->cmd, info, &prevpipe, envp);
+		else
+			fork_pipe_n_dup_lst_cmd(info->cmd, info, &prevpipe, envp);
 		info->cmd = info->cmd->next;
 	}
-	close(info->pipefd[info->cmd_nb - 2][READ_END]);
-	wait_cmds(info);
 }
 
 int	main(int argc, char **argv, char **envp)
@@ -89,12 +76,6 @@ int	main(int argc, char **argv, char **envp)
 	info = init_info(argc, argv, envp);
 	if (!info)
 		return (4);
-	info->pipefd = get_pipefd(info);
-	if (!info->pipefd)
-	{
-		close_n_free(info);
-		return (4);
-	}
 	pipex(info, envp);
 	exit_code = analyze_ex_code(info->exit_code, info);
 	close_n_free(info);

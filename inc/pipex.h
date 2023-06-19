@@ -31,6 +31,11 @@
 # define UNDRLN "\033[4m"
 # define END "\033[0m"
 
+/* fd */
+# define STDIN 0
+# define STDOUT 1
+# define STDERR 2
+
 /* pipes */
 # define READ_END 0
 # define WRITE_END 1
@@ -71,7 +76,6 @@ typedef struct s_info
 	t_list	*path;
 	t_cmd	*cmd;
 	t_cmd	*cmd_start;
-	int		**pipefd;
 	int		cmd_nb;
 	pid_t	last_pid;
 	int		exit_code;
@@ -109,10 +113,21 @@ t_files	*file_parser(int argc, char **argv);
 void	close_files(t_files *files);
 
 /* fd */
-int		**get_pipefd(t_info *info);
-void	close_pipefd(int cmd_nb, int **pipefd);
+int		*get_pipefd(void);
+void	close_pipefd(int *pipefd);
 
 /* execution */
-void	execute(t_info *info, char **envp);
+void	execute(t_cmd *cmd, t_info *info, char **envp);
+void	wait_cmds(t_info *info);
+
+/* fork_pipe_dup */
+void	fork_pipe_n_dup(t_cmd *cmd, t_info *info, int *prevpipe, char **envp);
+void	fork_pipe_n_dup_lst_cmd(t_cmd *cmd, t_info *info, int *prevpipe, char **envp);
+
+/* duppers */
+void	dupper(int new_fd, int old_fd, t_info *info);
+void	dup_infile(t_info *info);
+void	dup_outfile(t_info *info);
+void	dup_cmd(t_cmd *cmd, int pipefd[2], t_info *info);
 
 #endif
