@@ -112,10 +112,6 @@ char	**quote_space_parser(int argc, char **argv);
 t_files	*file_parser(int argc, char **argv);
 void	close_files(t_files *files);
 
-/* fd */
-int		*get_pipefd(void);
-void	close_pipefd(int *pipefd);
-
 /* execution */
 void	execute(t_cmd *cmd, t_info *info, char **envp);
 void	wait_cmds(t_info *info);
@@ -125,9 +121,8 @@ void	fork_pipe_n_dup(t_cmd *cmd, t_info *info, int *prevpipe, char **envp);
 void	fork_pipe_n_dup_lst_cmd(t_cmd *cmd, t_info *info, int *prevpipe, char **envp);
 
 /* duppers */
-void	dupper(int new_fd, int old_fd, t_info *info);
-void	dup_infile(t_info *info);
-void	dup_outfile(t_info *info);
-void	dup_cmd(t_cmd *cmd, int pipefd[2], t_info *info);
+int	dupper(int old_fd, int new_fd, t_info *info);
+int	dup_infile(t_info *info);
+int	dup_outfile(t_info *info);
 
 #endif

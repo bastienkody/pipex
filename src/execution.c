@@ -12,26 +12,25 @@
 
 #include "../inc/pipex.h"
 
-void	dupper(int new_fd, int old_fd, t_info *info)
+int	dupper(int old_fd, int new_fd, t_info *info)
 {
-	//ft_fprintf(2, "dupping for %s, newfd:%i, old:%i\n", info->cmd->cmd_name, new_fd, old_fd);
-	if (dup2(new_fd, old_fd) == -1)
+	if (dup2(old_fd, new_fd) == -1)
 	{
 		ft_fprintf(2, "cmd%s nfd%i ofd%i\n", info->cmd->cmd_name, new_fd, old_fd);
 		perror("pipex (dup2)");
 		close_n_free(info);
 		exit(EXIT_FAILURE);
 	}
+	return (1);
 }
 
 int	dup_infile(t_info *info)
 {
-	int	fd;
-
 	if (!info->files->in_e && !info->files->in_r)
 	{
-		fd = dupper(info->files->in_fd, 0, info);
+		dupper(info->files->in_fd, STDIN, info);
 		close(info->files->in_fd);
+		return (1);
 	}
 	else
 	{
@@ -44,12 +43,13 @@ int	dup_infile(t_info *info)
 	}
 }
 
-void	dup_outfile(t_info *info)
+int	dup_outfile(t_info *info)
 {
 	if (!info->files->out_w)
 	{
-		dupper(info->files->out_fd, 1, info);
+		dupper(info->files->out_fd, STDOUT, info);
 		close(info->files->out_fd);
+		return (1);
 	}
 	else
 	{
@@ -75,8 +75,16 @@ void	fork_pipe_n_dup(t_cmd *cmd, t_info *info, int *prevpipe, char **envp)
 		close(pipefd[0]);
 		dupper(pipefd[1], STDOUT, info);
 		close(pipefd[1]);
-		dupper(*prevpipe, STDIN, info);
-		close(*prevpipe);
+		if (cmd->index)
+		{
+			dupper(*prevpipe, STDIN, info);
+			close(*prevpipe);
+		}
+		else
+		{
+			dupper(info->files->in_fd, STDIN, info);
+			close(info->files->in_fd);
+		}	
 		execute(cmd, info, envp);
 	}
 	else if (pid > 0)
@@ -97,9 +105,10 @@ void	fork_pipe_n_dup_lst_cmd(t_cmd *cmd, t_info *info, int *prevpipe, char **env
 		perror("fork"); // + close n free ?
 	if (pid == 0)
 	{
-		dupper(*prevpipe, STDIN, info);
+		dupper(*prevpipe, STDIN,  info);
 		close(*prevpipe);
-		dupper(info->files->out_fd, 1, info);
+		dupper(info->files->out_fd, STDOUT, info);
+		close(info->files->out_fd);
 		execute(cmd, info, envp);
 	}
 	else if (pid > 0)
@@ -121,7 +130,6 @@ void	execute(t_cmd *cmd, t_info *info, char **envp)
 		close_n_free(info);
 		exit(EXIT_FAILURE);
 	}
-	//close_files(info->files);
 	execve(cmd->cmd_path, cmd->cmd_argv, envp);
 	perror("pipex (execve)");
 	close_n_free(info);

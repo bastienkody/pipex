@@ -52,8 +52,8 @@ void	pipex(t_info *info, char **envp)
 {
 	int	prevpipe;
 
-	prevpipe = dup_infile(info);
-	//prevpipe = dup(0);
+	//prevpipe = dup_infile(info);
+	prevpipe = dup(0);
 
 	while (info->cmd)
 	{
