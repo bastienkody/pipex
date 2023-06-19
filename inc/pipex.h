@@ -117,12 +117,12 @@ void	execute(t_cmd *cmd, t_info *info, char **envp);
 void	wait_cmds(t_info *info);
 
 /* fork_pipe_dup */
-void	fork_pipe_n_dup(t_cmd *cmd, t_info *info, int *prevpipe, char **envp);
-void	fork_pipe_n_dup_lst_cmd(t_cmd *cmd, t_info *info, int *prevpipe, char **envp);
+void	fork_pipe_dup(t_cmd *cmd, t_info *info, int *prevpipe, char **envp);
+void	fork_pipe_dup_lst(t_cmd *cmd, t_info *info, int *prevpipe, char **envp);
 
 /* duppers */
-int	dupper(int old_fd, int new_fd, t_info *info);
-int	dup_infile(t_info *info);
-int	dup_outfile(t_info *info);
+int		dupper(int old_fd, int new_fd, t_info *info);
+int		dup_infile(t_info *info);
+int		dup_outfile(t_info *info);
 
 #endif
