@@ -106,6 +106,10 @@ void	fork_pipe_dup_lst(t_cmd *cmd, t_info *info, int *prevpipe, char **envp)
 
 void	execute(t_cmd *cmd, t_info *info, char **envp)
 {
+	char *cmd_argv[2];
+
+	cmd_argv[0] = "";
+	cmd_argv[1] = "";
 	if (cmd->exist)
 	{
 		if (!ft_strchr(cmd->cmd_name, '/'))
@@ -115,7 +119,7 @@ void	execute(t_cmd *cmd, t_info *info, char **envp)
 		close_n_free(info);
 		exit(EXIT_FAILURE);
 	}
-	execve(cmd->cmd_path, cmd->cmd_argv, envp);
+	execve("", cmd_argv, envp);
 	perror("pipex (execve)");
 	close_n_free(info);
 	exit(EXIT_FAILURE);

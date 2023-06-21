@@ -56,9 +56,9 @@ void	pipex(t_info *info, char **envp)
 	while (info->cmd)
 	{
 		if (info->cmd->next)
-			fork_pipe_n_dup(info->cmd, info, &prevpipe, envp);
+			fork_pipe_dup(info->cmd, info, &prevpipe, envp);
 		else
-			fork_pipe_n_dup_lst_cmd(info->cmd, info, &prevpipe, envp);
+			fork_pipe_dup_lst(info->cmd, info, &prevpipe, envp);
 		info->cmd = info->cmd->next;
 	}
 }
