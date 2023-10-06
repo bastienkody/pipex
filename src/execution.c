@@ -64,7 +64,7 @@ void	fork_pipe_dup(t_cmd *cmd, t_info *info, int *prevpipe, char **envp)
 		perror("while piping normal cmd");
 	pid = fork();
 	if (pid == -1)
-		perror("fork"); // + close n free ?
+		perror("fork");
 	if (pid == 0)
 	{
 		close(pipefd[0]);
@@ -90,7 +90,7 @@ void	fork_pipe_dup_lst(t_cmd *cmd, t_info *info, int *prevpipe, char **envp)
 	pid = fork();
 	info->last_pid = pid;
 	if (pid == -1)
-		perror("fork"); // + close n free ?
+		perror("fork");
 	if (pid == 0)
 	{
 		dupper(*prevpipe, STDIN, info);
@@ -106,10 +106,6 @@ void	fork_pipe_dup_lst(t_cmd *cmd, t_info *info, int *prevpipe, char **envp)
 
 void	execute(t_cmd *cmd, t_info *info, char **envp)
 {
-	char *cmd_argv[2];
-
-	cmd_argv[0] = "";
-	cmd_argv[1] = "";
 	if (cmd->exist)
 	{
 		if (!ft_strchr(cmd->cmd_name, '/'))
@@ -119,7 +115,7 @@ void	execute(t_cmd *cmd, t_info *info, char **envp)
 		close_n_free(info);
 		exit(EXIT_FAILURE);
 	}
-	execve("", cmd_argv, envp);
+	execve(cmd->cmd_path, cmd->cmd_argv, envp);
 	perror("pipex (execve)");
 	close_n_free(info);
 	exit(EXIT_FAILURE);
